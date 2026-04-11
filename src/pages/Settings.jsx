@@ -76,24 +76,12 @@ export default function Settings() {
       {/* GitHub section */}
       <Section title="GitHub 雲端同步" icon="☁️">
         <div className="mb-3">
-          {autoConfigured ? (
-            <div className="flex items-start gap-2 text-sm px-3 py-2.5 rounded-xl bg-green-50 text-green-700">
-              <span className="mt-0.5">🔒</span>
-              <div>
-                <p className="font-medium">已透過 GitHub Secret 自動設定</p>
-                <p className="text-xs text-green-600 mt-0.5">
-                  資料同步至 <strong>{github.owner}/{github.repo}</strong>
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className={`flex items-center gap-2 text-sm px-3 py-2 rounded-xl ${isGitHubConfigured ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
-              {isGitHubConfigured ? '✅ 已連線' : '⚠️ 未設定 — 資料僅存本機'}
-            </div>
-          )}
+          <div className={`flex items-center gap-2 text-sm px-3 py-2 rounded-xl ${isGitHubConfigured ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
+            {isGitHubConfigured ? '✅ 已連線 — 資料同步至 GitHub' : '⚠️ 未設定 — 資料僅存本機'}
+          </div>
         </div>
 
-        {!autoConfigured && <div className="space-y-3">
+        <div className="space-y-3">
           <div>
             <label className="form-label">Personal Access Token (PAT)</label>
             <div className="relative">
@@ -143,16 +131,15 @@ export default function Settings() {
             {saving ? <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" /> : <Save size={16} />}
             {saving ? '連線中...' : '儲存並測試連線'}
           </button>
-        </div>}
 
-        {autoConfigured && (
-          <div className="mt-2 p-3 bg-gray-50 rounded-xl">
-            <p className="text-xs text-gray-500">
-              🔐 PAT 已由 GitHub Actions Secret 注入，無需手動設定。<br />
-              資料儲存於私有 repo：<strong>{github.owner}/{github.repo}</strong>
+          <div className="p-3 bg-blue-50 rounded-xl">
+            <p className="text-xs text-blue-700 font-medium mb-1">🔒 安全提示</p>
+            <p className="text-xs text-blue-600">
+              PAT 只會儲存在您裝置的瀏覽器本機，不會出現在程式碼或伺服器。
+              建議使用 Fine-grained token，只開放 <strong>baby-diary-data</strong> repo 讀寫權限。
             </p>
           </div>
-        )}
+        </div>
       </Section>
 
       {/* App info */}

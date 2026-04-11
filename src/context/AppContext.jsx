@@ -70,9 +70,8 @@ function reducer(state, action) {
   }
 }
 
-// Env vars injected at build time by GitHub Actions (from Secrets)
-// These are baked into the production bundle — keep the PAT scope minimal
-const ENV_TOKEN = import.meta.env.VITE_GH_TOKEN || ''
+// Non-secret build-time config (owner/repo only — token NEVER injected at build time)
+// Token is entered manually in Settings and stored only in localStorage on user's device
 const ENV_OWNER = import.meta.env.VITE_GH_OWNER || ''
 const ENV_REPO  = import.meta.env.VITE_GH_REPO  || ''
 
@@ -83,9 +82,10 @@ export function AppProvider({ children }) {
   useEffect(() => {
     const saved = settingsStore.get()
 
-    // Priority: env (build-time secret) > localStorage (manual settings)
+    // Token ONLY from localStorage (manual input in Settings — never from build env)
+    // Owner/repo can be pre-filled from build-time env (not sensitive)
     const github = {
-      token: ENV_TOKEN || saved.github?.token || '',
+      token: saved.github?.token || '',
       owner: ENV_OWNER || saved.github?.owner || '',
       repo:  ENV_REPO  || saved.github?.repo  || '',
     }
@@ -100,7 +100,7 @@ export function AppProvider({ children }) {
         isGitHubConfigured: !!(github.token && github.owner && github.repo),
         babies,
         activeBabyId,
-        autoConfigured: !!(ENV_TOKEN && ENV_OWNER && ENV_REPO),
+        autoConfigured: false,
       }
     })
 
