@@ -9,7 +9,7 @@ import { ls } from '../services/localStorage'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
 import toast from 'react-hot-toast'
-import { getWhoReference } from '../data/whoStandards'
+import { getWhoReference, estimatePercentile } from '../data/whoStandards'
 
 function getCurrentDate() {
   const now = new Date()
@@ -111,20 +111,27 @@ export default function Growth() {
 
   const activeTabConfig = tabs.find(t => t.id === activeTab)
 
-  // Latest value per metric — each metric finds its own most recent non-null record
+  // Latest value per metric — each metric finds its own most recent non-null
+  // record, paired with its estimated WHO percentile at that record's age.
   const latestByMetric = useMemo(() => {
-    const pick = (key) => {
+    const gender = activeBaby?.gender
+    const pick = (key, metricId) => {
       for (let i = records.length - 1; i >= 0; i--) {
-        if (records[i][key] != null && records[i][key] !== '') return records[i]
+        const r = records[i]
+        if (r[key] != null && r[key] !== '') {
+          const age = getBabyAgeMonths(r.date)
+          const pct = estimatePercentile(metricId, gender, age, r[key])
+          return { record: r, percentile: pct }
+        }
       }
       return null
     }
     return {
-      weight: pick('weight'),
-      height: pick('height'),
-      headCirc: pick('headCirc'),
+      weight: pick('weight', 'weight'),
+      height: pick('height', 'height'),
+      headCirc: pick('headCirc', 'headCirc'),
     }
-  }, [records])
+  }, [records, activeBaby, getBabyAgeMonths])
 
   const hasAnyLatest = latestByMetric.weight || latestByMetric.height || latestByMetric.headCirc
 
@@ -152,33 +159,40 @@ export default function Growth() {
 
   return (
     <div className="px-4 pt-4 pb-4 space-y-4 animate-fade-in">
-      {/* Latest stats — each metric shows its own most recent value with its own date */}
+      {/* Latest stats — each metric shows its own most recent value, date
+          and estimated WHO percentile */}
       {hasAnyLatest && (
         <div className="card">
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">最新數值</h2>
           <div className="grid grid-cols-3 gap-3">
             <StatCard
               icon="⚖️"
-              value={latestByMetric.weight ? `${latestByMetric.weight.weight}kg` : '—'}
+              value={latestByMetric.weight ? `${latestByMetric.weight.record.weight}kg` : '—'}
               label="體重"
-              date={latestByMetric.weight?.date}
+              date={latestByMetric.weight?.record.date}
+              percentile={latestByMetric.weight?.percentile}
               color="text-pink-500"
             />
             <StatCard
               icon="📏"
-              value={latestByMetric.height ? `${latestByMetric.height.height}cm` : '—'}
+              value={latestByMetric.height ? `${latestByMetric.height.record.height}cm` : '—'}
               label="身高"
-              date={latestByMetric.height?.date}
+              date={latestByMetric.height?.record.date}
+              percentile={latestByMetric.height?.percentile}
               color="text-blue-500"
             />
             <StatCard
               icon="🧢"
-              value={latestByMetric.headCirc ? `${latestByMetric.headCirc.headCirc}cm` : '—'}
+              value={latestByMetric.headCirc ? `${latestByMetric.headCirc.record.headCirc}cm` : '—'}
               label="頭圍"
-              date={latestByMetric.headCirc?.date}
+              date={latestByMetric.headCirc?.record.date}
+              percentile={latestByMetric.headCirc?.percentile}
               color="text-green-500"
             />
           </div>
+          <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">
+            百分位依 WHO 0-5 歲國際生長標準推算（對照寶寶性別與月齡）
+          </p>
         </div>
       )}
 
@@ -212,8 +226,8 @@ export default function Growth() {
                 <XAxis
                   dataKey="age"
                   type="number"
-                  domain={[0, 60]}
-                  ticks={[0, 6, 12, 18, 24, 30, 36, 42, 48, 54, 60]}
+                  domain={[0, 24]}
+                  ticks={[0, 3, 6, 9, 12, 15, 18, 21, 24]}
                   tick={{ fontSize: 11, fill: '#9ca3af' }}
                   label={{ value: '月齡', position: 'insideBottomRight', offset: -2, fontSize: 11, fill: '#9ca3af' }}
                 />
@@ -255,7 +269,7 @@ export default function Growth() {
               </LineChart>
             </ResponsiveContainer>
             <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">
-              虛線為世界衛生組織 (WHO) 公布之 0-5 歲國際嬰幼兒生長標準百分位曲線 (P3 / P50 / P97)，依寶寶性別自動對應。
+              虛線為世界衛生組織 (WHO) 公布之國際嬰幼兒生長標準百分位曲線 (P3 / P50 / P97)，顯示 0-24 個月區間，依寶寶性別自動對應。
             </p>
           </>
         )}
@@ -336,12 +350,18 @@ export default function Growth() {
   )
 }
 
-function StatCard({ icon, value, label, color, date }) {
+function StatCard({ icon, value, label, color, date, percentile }) {
+  const pctLabel = percentile != null
+    ? (percentile.startsWith('<') || percentile.startsWith('>') ? `${percentile}%` : `P${percentile}`)
+    : null
   return (
     <div className="text-center bg-gray-50 rounded-xl p-2">
       <div className="text-lg">{icon}</div>
       <div className={`text-sm font-bold ${color}`}>{value}</div>
       <div className="text-xs text-gray-400">{label}</div>
+      {pctLabel && (
+        <div className={`text-[10px] font-semibold mt-0.5 ${color}`}>{pctLabel}</div>
+      )}
       {date && <div className="text-[10px] text-gray-400 mt-0.5">{date.slice(5)}</div>}
     </div>
   )

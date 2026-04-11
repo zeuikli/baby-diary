@@ -173,3 +173,47 @@ export function getWhoReference(metric, gender) {
   if (metric === 'headCirc') return isGirl ? WHO_HEADCIRC_GIRLS : WHO_HEADCIRC_BOYS
   return []
 }
+
+// Estimate the percentile of a value at a given age (months) using the WHO
+// P3 / P50 / P97 reference. Linearly interpolates between adjacent reference
+// ages, then within the P3-P50 or P50-P97 band.
+// Returns a string label like "50", "~75", "<3", ">97", or null if out of range.
+export function estimatePercentile(metric, gender, ageMonths, value) {
+  if (value == null || ageMonths == null) return null
+  const ref = getWhoReference(metric, gender)
+  if (!ref || ref.length === 0) return null
+
+  const minAge = ref[0].age
+  const maxAge = ref[ref.length - 1].age
+  if (ageMonths < minAge || ageMonths > maxAge) return null
+
+  // Find surrounding WHO data points for the age
+  let lo = ref[0]
+  let hi = ref[ref.length - 1]
+  for (let i = 0; i < ref.length - 1; i++) {
+    if (ageMonths >= ref[i].age && ageMonths <= ref[i + 1].age) {
+      lo = ref[i]
+      hi = ref[i + 1]
+      break
+    }
+  }
+
+  // Linearly interpolate P3/P50/P97 at the exact age
+  const span = hi.age - lo.age
+  const t = span === 0 ? 0 : (ageMonths - lo.age) / span
+  const p3 = lo.p3 + (hi.p3 - lo.p3) * t
+  const p50 = lo.p50 + (hi.p50 - lo.p50) * t
+  const p97 = lo.p97 + (hi.p97 - lo.p97) * t
+
+  if (value < p3) return '<3'
+  if (value > p97) return '>97'
+  if (value === p50) return '50'
+  let pct
+  if (value < p50) {
+    pct = 3 + ((value - p3) / (p50 - p3)) * 47
+  } else {
+    pct = 50 + ((value - p50) / (p97 - p50)) * 47
+  }
+  return String(Math.round(pct))
+}
+
