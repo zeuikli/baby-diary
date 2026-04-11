@@ -128,7 +128,9 @@ export default function Home() {
       {/* Timeline */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">今日時間軸</h2>
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+            {isToday ? '今日時間軸' : `${selectedDate} 時間軸`}
+          </h2>
         </div>
         {loading ? (
           <div className="card flex items-center justify-center py-10">

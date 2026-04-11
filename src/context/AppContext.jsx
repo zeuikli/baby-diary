@@ -232,6 +232,22 @@ export function AppProvider({ children }) {
     settingsStore.update({ activeBabyId: babyId })
   }, [])
 
+  const deleteBaby = useCallback(async (babyId) => {
+    const updatedBabies = state.babies.filter(b => b.id !== babyId)
+    dispatch({ type: 'SET_BABIES', payload: updatedBabies })
+    settingsStore.update({ babies: updatedBabies })
+    if (state.activeBabyId === babyId) {
+      const nextId = updatedBabies[0]?.id ?? null
+      dispatch({ type: 'SET_ACTIVE_BABY', payload: nextId })
+      settingsStore.update({ activeBabyId: nextId })
+    }
+    if (githubService.isConfigured) {
+      try { await githubService.deleteBaby(babyId) } catch (e) {
+        console.error('Failed to delete baby from GitHub:', e)
+      }
+    }
+  }, [state.babies, state.activeBabyId])
+
   const saveBaby = useCallback(async (baby) => {
     const existing = state.babies.find(b => b.id === baby.id)
     const updatedBabies = existing
@@ -309,6 +325,7 @@ export function AppProvider({ children }) {
     deleteRecord,
     setActiveBaby,
     saveBaby,
+    deleteBaby,
     updateGitHub,
     setSelectedDate,
     loadDayRecord,

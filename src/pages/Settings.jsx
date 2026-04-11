@@ -10,7 +10,8 @@ const AVATARS = ['👶', '🧒', '👦', '👧', '🐣', '🌸', '⭐', '🌈']
 
 export default function Settings() {
   const navigate = useNavigate()
-  const { github, isGitHubConfigured, autoConfigured, babies, activeBabyId, updateGitHub, saveBaby, setActiveBaby } = useApp()
+  const { github, isGitHubConfigured, autoConfigured, babies, activeBabyId, updateGitHub, saveBaby, deleteBaby, setActiveBaby } = useApp()
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
   const [githubForm, setGithubForm] = useState({ ...github })
   const [showToken, setShowToken] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -59,6 +60,12 @@ export default function Settings() {
     toast.success(editBaby ? '寶寶資料已更新 👶' : '新寶寶已新增 🎉')
   }
 
+  const handleDeleteBaby = async (babyId) => {
+    await deleteBaby(babyId)
+    setConfirmDeleteId(null)
+    toast.success('已刪除寶寶資料')
+  }
+
   return (
     <div className="px-4 pt-4 pb-4 space-y-4 animate-fade-in">
       {/* Babies section */}
@@ -88,6 +95,16 @@ export default function Settings() {
                 <button onClick={() => { setEditBaby(baby); setShowBabyModal(true) }} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 touch-manipulation">
                   <ChevronRight size={16} />
                 </button>
+                {confirmDeleteId === baby.id ? (
+                  <div className="flex gap-1">
+                    <button onClick={() => handleDeleteBaby(baby.id)} className="px-2 py-1 rounded-lg bg-red-100 text-red-600 text-xs font-medium touch-manipulation">確認刪除</button>
+                    <button onClick={() => setConfirmDeleteId(null)} className="px-2 py-1 rounded-lg bg-gray-100 text-gray-500 text-xs touch-manipulation">取消</button>
+                  </div>
+                ) : (
+                  <button onClick={() => setConfirmDeleteId(baby.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-400 touch-manipulation">
+                    <Trash2 size={15} />
+                  </button>
+                )}
               </div>
             ))}
           </div>

@@ -68,6 +68,16 @@ class GitHubService {
     }
   }
 
+  async deleteFile(filePath, message = 'Delete file') {
+    const existing = await this.getFile(filePath)
+    if (!existing?.sha) return // file doesn't exist, nothing to do
+    await this.request('DELETE', `/repos/${this.owner}/${this.repo}/contents/${filePath}`, {
+      message,
+      sha: existing.sha,
+    })
+    this._cache.delete(filePath)
+  }
+
   async putFile(filePath, content, message = 'Update diary data') {
     const existing = await this.getFile(filePath)
     const body = {
@@ -136,6 +146,11 @@ class GitHubService {
     const path = this.babyPath(baby.id)
     await this.putFile(path, baby, `Update baby profile: ${baby.name}`)
     return baby
+  }
+
+  async deleteBaby(babyId) {
+    const path = this.babyPath(babyId)
+    await this.deleteFile(path, `Delete baby profile: ${babyId}`)
   }
 
   // ─── Daily Records ─────────────────────────────────────────
