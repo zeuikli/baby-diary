@@ -8,7 +8,7 @@ import toast from 'react-hot-toast'
 const AVATARS = ['👶', '🧒', '👦', '👧', '🐣', '🌸', '⭐', '🌈']
 
 export default function Settings() {
-  const { github, isGitHubConfigured, babies, activeBabyId, updateGitHub, saveBaby, setActiveBaby } = useApp()
+  const { github, isGitHubConfigured, autoConfigured, babies, activeBabyId, updateGitHub, saveBaby, setActiveBaby } = useApp()
   const [githubForm, setGithubForm] = useState({ ...github })
   const [showToken, setShowToken] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -76,12 +76,24 @@ export default function Settings() {
       {/* GitHub section */}
       <Section title="GitHub 雲端同步" icon="☁️">
         <div className="mb-3">
-          <div className={`flex items-center gap-2 text-sm px-3 py-2 rounded-xl mb-3 ${isGitHubConfigured ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
-            {isGitHubConfigured ? '✅ 已連線' : '⚠️ 未設定 — 資料僅存本機'}
-          </div>
+          {autoConfigured ? (
+            <div className="flex items-start gap-2 text-sm px-3 py-2.5 rounded-xl bg-green-50 text-green-700">
+              <span className="mt-0.5">🔒</span>
+              <div>
+                <p className="font-medium">已透過 GitHub Secret 自動設定</p>
+                <p className="text-xs text-green-600 mt-0.5">
+                  資料同步至 <strong>{github.owner}/{github.repo}</strong>
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className={`flex items-center gap-2 text-sm px-3 py-2 rounded-xl ${isGitHubConfigured ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
+              {isGitHubConfigured ? '✅ 已連線' : '⚠️ 未設定 — 資料僅存本機'}
+            </div>
+          )}
         </div>
 
-        <div className="space-y-3">
+        {!autoConfigured && <div className="space-y-3">
           <div>
             <label className="form-label">Personal Access Token (PAT)</label>
             <div className="relative">
@@ -131,18 +143,16 @@ export default function Settings() {
             {saving ? <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" /> : <Save size={16} />}
             {saving ? '連線中...' : '儲存並測試連線'}
           </button>
-        </div>
+        </div>}
 
-        <div className="mt-3 p-3 bg-blue-50 rounded-xl">
-          <p className="text-xs text-blue-700 font-medium mb-1">如何設定 GitHub PAT？</p>
-          <ol className="text-xs text-blue-600 space-y-0.5 list-decimal list-inside">
-            <li>前往 GitHub → Settings → Developer settings</li>
-            <li>Personal access tokens → Tokens (classic)</li>
-            <li>Generate new token，勾選 repo 權限</li>
-            <li>建立一個私人 repository 存放資料</li>
-            <li>填入上方欄位並儲存</li>
-          </ol>
-        </div>
+        {autoConfigured && (
+          <div className="mt-2 p-3 bg-gray-50 rounded-xl">
+            <p className="text-xs text-gray-500">
+              🔐 PAT 已由 GitHub Actions Secret 注入，無需手動設定。<br />
+              資料儲存於私有 repo：<strong>{github.owner}/{github.repo}</strong>
+            </p>
+          </div>
+        )}
       </Section>
 
       {/* App info */}
