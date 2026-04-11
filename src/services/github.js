@@ -57,7 +57,7 @@ class GitHubService {
 
     try {
       const data = await this.request('GET', `/repos/${this.owner}/${this.repo}/contents/${filePath}`)
-      const content = JSON.parse(atob(data.content.replace(/\n/g, '')))
+      const content = JSON.parse(decodeURIComponent(escape(atob(data.content.replace(/\n/g, '')))))
       this._cache.set(cacheKey, { content, sha: data.sha })
       return { content, sha: data.sha }
     } catch (e) {
