@@ -75,6 +75,30 @@ function reducer(state, action) {
 const ENV_OWNER = import.meta.env.VITE_GH_OWNER || ''
 const ENV_REPO  = import.meta.env.VITE_GH_REPO  || ''
 
+// Valid avatar list (must match Settings.jsx AVATARS)
+const VALID_AVATARS = ['👶', '🧒', '👦', '👧', '🐣', '🌸', '⭐', '🌈']
+
+/**
+ * Repair a baby object whose avatar was garbled by Latin-1/UTF-8 confusion.
+ * Garbling happens when atob() decoded a properly-encoded UTF-8 base64 without
+ * the encodeURIComponent/escape step, producing Latin-1 bytes instead of Unicode.
+ * We reverse it by reinterpreting each char code as a raw byte and decoding as UTF-8.
+ * Returns the same object reference if no repair is needed.
+ */
+function repairBaby(baby) {
+  let { avatar } = baby
+  // Garbled avatars contain only chars ≤ 0xFF (Latin-1 byte range)
+  if (avatar && [...avatar].every(c => c.charCodeAt(0) <= 0xFF)) {
+    try {
+      const bytes = new Uint8Array([...avatar].map(c => c.charCodeAt(0)))
+      const recovered = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+      if (VALID_AVATARS.includes(recovered)) avatar = recovered
+    } catch {}
+  }
+  if (!VALID_AVATARS.includes(avatar)) avatar = '👶'
+  return avatar === baby.avatar ? baby : { ...baby, avatar }
+}
+
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
@@ -90,7 +114,7 @@ export function AppProvider({ children }) {
       repo:  ENV_REPO  || saved.github?.repo  || '',
     }
 
-    const babies = saved.babies || []
+    const babies = (saved.babies || []).map(repairBaby)
     const activeBabyId = saved.activeBabyId || (babies[0]?.id ?? null)
 
     dispatch({
@@ -109,10 +133,17 @@ export function AppProvider({ children }) {
       // Sync babies from GitHub on startup so other devices see up-to-date list
       githubService.getBabies().then(remoteBabies => {
         if (remoteBabies.length === 0) return
+        // Repair any garbled avatars and write corrected data back to GitHub
+        const repairedRemote = remoteBabies.map(repairBaby)
+        repairedRemote.forEach((repaired, i) => {
+          if (repaired !== remoteBabies[i]) {
+            githubService.saveBaby(repaired).catch(() => {})
+          }
+        })
         const localBabies = saved.babies || []
         const localActiveId = saved.activeBabyId || (localBabies[0]?.id ?? null)
         const map = new Map(localBabies.map(b => [b.id, b]))
-        remoteBabies.forEach(b => map.set(b.id, b))
+        repairedRemote.forEach(b => map.set(b.id, b))
         const merged = Array.from(map.values())
         dispatch({ type: 'SET_BABIES', payload: merged })
         settingsStore.update({ babies: merged })
@@ -225,8 +256,14 @@ export function AppProvider({ children }) {
     try {
       const remoteBabies = await githubService.getBabies()
       if (remoteBabies.length === 0) return false
+      const repairedRemote = remoteBabies.map(repairBaby)
+      repairedRemote.forEach((repaired, i) => {
+        if (repaired !== remoteBabies[i]) {
+          githubService.saveBaby(repaired).catch(() => {})
+        }
+      })
       const map = new Map(localBabies.map(b => [b.id, b]))
-      remoteBabies.forEach(b => map.set(b.id, b)) // remote overrides local
+      repairedRemote.forEach(b => map.set(b.id, b)) // remote overrides local
       const merged = Array.from(map.values())
       dispatch({ type: 'SET_BABIES', payload: merged })
       settingsStore.update({ babies: merged })
