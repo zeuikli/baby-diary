@@ -1,10 +1,18 @@
 #!/usr/bin/env node
 /**
- * 寶寶成長日記 匯出資料 → Baby Diary PWA CSV 轉換腳本
+ * 寶寶成長日記 原始 CSV 匯出 → Baby Diary PWA 各類型 CSV 轉換腳本
+ * 用法: node convert-baby-diary.cjs <匯出檔案路徑>
+ * 例:   node convert-baby-diary.cjs "imports/BabyDiary_肉肉 2.csv"
  */
 
 const fs = require('fs')
 const path = require('path')
+
+const inputFile = process.argv[2]
+if (!inputFile) {
+  console.error('用法: node convert-baby-diary.cjs <匯出檔案路徑>')
+  process.exit(1)
+}
 
 const OUT = path.join(__dirname, 'imports')
 if (!fs.existsSync(OUT)) fs.mkdirSync(OUT)
@@ -32,337 +40,74 @@ function toCsv(rows, headers) {
   return '\uFEFF' + lines.join('\n') + '\n'
 }
 
-// ─────────────────────────────────────────────────────────
-// 1. 瓶餵
-// ─────────────────────────────────────────────────────────
-const bottleRaw = `2026/04/11 18:00\t配方奶\t160
-2026/04/11 15:30\t配方奶\t100
-2026/04/11 10:40\t配方奶\t180
-2026/04/11 09:30\t配方奶\t60
-2026/04/11 04:22\t配方奶\t190
-2026/04/11 00:12\t配方奶\t180
-2026/04/10 18:20\t配方奶\t210
-2026/04/10 15:29\t配方奶\t150
-2026/04/10 07:30\t配方奶\t180
-2026/04/10 02:45\t配方奶\t210
-2026/04/09 22:20\t配方奶\t210
-2026/04/09 18:13\t配方奶\t210
-2026/04/09 15:32\t配方奶\t90
-2026/04/09 11:31\t配方奶\t30
-2026/04/09 07:16\t配方奶\t150
-2026/04/09 02:13\t配方奶\t140
-2026/04/08 22:10\t配方奶\t210
-2026/04/08 18:04\t配方奶\t210
-2026/04/08 15:00\t配方奶\t80
-2026/04/08 11:00\t配方奶\t60
-2026/04/08 08:04\t配方奶\t150
-2026/04/08 04:27\t配方奶\t130
-2026/04/08 00:50\t配方奶\t210
-2026/04/07 18:10\t配方奶\t170
-2026/04/07 15:04\t配方奶\t120
-2026/04/07 11:03\t配方奶\t50
-2026/04/07 07:40\t配方奶\t110
-2026/04/07 02:26\t配方奶\t190
-2026/04/06 21:30\t配方奶\t210
-2026/04/06 17:56\t配方奶\t210
-2026/04/06 14:04\t配方奶\t120
-2026/04/06 10:10\t配方奶\t150
-2026/04/06 05:55\t配方奶\t180
-2026/04/05 22:30\t配方奶\t120
-2026/04/05 19:20\t配方奶\t180
-2026/04/05 15:40\t配方奶\t180
-2026/04/05 11:53\t配方奶\t210
-2026/04/05 07:05\t配方奶\t170
-2026/04/05 01:10\t配方奶\t210
-2026/04/04 20:40\t配方奶\t210
-2026/04/04 16:30\t配方奶\t210
-2026/04/04 11:30\t配方奶\t150
-2026/04/04 07:33\t配方奶\t210
-2026/04/04 03:08\t配方奶\t210
-2026/04/03 22:08\t配方奶\t170
-2026/04/03 17:15\t配方奶\t210
-2026/04/03 13:02\t配方奶\t240
-2026/04/03 09:40\t配方奶\t170
-2026/04/03 05:30\t配方奶\t200
-2026/04/03 00:05\t配方奶\t210
-2026/04/02 20:07\t配方奶\t120
-2026/04/02 18:15\t配方奶\t210
-2026/04/02 15:00\t配方奶\t160
-2026/04/02 11:00\t配方奶\t170
-2026/04/02 07:30\t配方奶\t60
-2026/04/02 05:03\t配方奶\t160
-2026/04/02 00:20\t配方奶\t200
-2026/04/01 20:52\t配方奶\t90
-2026/04/01 17:50\t配方奶\t210
-2026/04/01 11:30\t配方奶\t70
-2026/04/01 07:15\t配方奶\t80
-2026/04/01 04:15\t配方奶\t210
-2026/03/31 23:11\t配方奶\t210
-2026/03/31 19:45\t配方奶\t50
-2026/03/31 18:08\t配方奶\t210
-2026/03/31 15:36\t配方奶\t100
-2026/03/31 11:36\t配方奶\t100
-2026/03/31 07:15\t配方奶\t190
-2026/03/31 04:01\t配方奶\t165
-2025/11/23 12:49\t配方奶\t60
-2025/11/23 10:41\t配方奶\t60
-2025/11/23 09:28\t母乳\t70
-2025/11/22 22:50\t配方奶\t20
-2025/11/22 22:30\t母乳\t80
-2025/11/22 18:57\t配方奶\t60
-2025/11/22 16:30\t配方奶\t60
-2025/11/22 15:38\t配方奶\t60
-2025/11/22 13:36\t配方奶\t60
-2025/11/22 12:58\t母乳\t70
-2025/11/22 09:40\t配方奶\t55
-2025/11/22 08:57\t母乳\t60
-2025/11/22 00:45\t配方奶\t90
-2025/11/21 21:50\t配方奶\t30
-2025/11/21 21:40\t母乳\t70
-2025/11/21 16:30\t配方奶\t120
-2025/11/21 13:18\t配方奶\t120
-2025/11/21 08:38\t配方奶\t10
-2025/11/21 07:37\t母乳\t80
-2025/11/21 02:45\t配方奶\t30
-2025/11/21 01:45\t配方奶\t20`
+const DIAPER_MAP = { 尿尿: 'wet', 大便: 'dirty', 混合: 'mixed', 乾淨: 'dry' }
+
+const raw = fs.readFileSync(inputFile, 'utf-8')
+const lines = raw.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n')
 
 const feedingRows = []
-for (const line of bottleRaw.trim().split('\n')) {
-  const cols = line.split('\t').map(s => s.trim())
-  if (cols.length < 3) continue
-  const dt = parseDateTime(cols[0])
-  if (!dt) continue
-  // 配方奶 → bottle（配方奶瓶餵），母乳 → pumped（母乳瓶餵）
-  const type = cols[1] === '母乳' ? 'pumped' : 'bottle'
-  feedingRows.push({ date: dt.date, time: dt.time, type, amount_ml: cols[2], duration_min: '', side: '', notes: '' })
+const diaperRows  = []
+const growthRows  = []
+
+let section = null
+
+for (const line of lines) {
+  const t = line.trim()
+  if (!t) { section = null; continue }
+
+  if (t === '瓶餵')    { section = 'bottle'; continue }
+  if (t === '親餵')    { section = 'breast'; continue }
+  if (t === '尿布')    { section = 'diaper'; continue }
+  if (t === '成長紀錄') { section = 'growth'; continue }
+  if (!section) continue
+
+  const cols = t.split(',').map(s => s.trim())
+
+  if (section === 'bottle') {
+    if (cols[0] === '時間') continue
+    const dt = parseDateTime(cols[0])
+    if (!dt) continue
+    const type = cols[1] === '母乳' ? 'pumped' : 'bottle'
+    feedingRows.push({ date: dt.date, time: dt.time, type, amount_ml: cols[2] || '', duration_min: '', side: '', notes: '' })
+  }
+
+  if (section === 'breast') {
+    if (cols[0] === '時間') continue
+    const dt = parseDateTime(cols[0])
+    if (!dt) continue
+    const left  = parseInt(cols[1]) || 0
+    const right = parseInt(cols[2]) || 0
+    const duration = left + right
+    const side = (left > 0 && right > 0) ? 'both' : (left > 0 ? 'left' : 'right')
+    feedingRows.push({ date: dt.date, time: dt.time, type: 'breast', amount_ml: '', duration_min: duration || '', side, notes: '' })
+  }
+
+  if (section === 'diaper') {
+    if (cols[0] === '時間') continue
+    const dt = parseDateTime(cols[0])
+    if (!dt) continue
+    diaperRows.push({ date: dt.date, time: dt.time, type: DIAPER_MAP[cols[1]] || 'wet', notes: '' })
+  }
+
+  if (section === 'growth') {
+    if (cols[0] === '日期') continue
+    const date = parseDate(cols[0])
+    if (!date) continue
+    const height = parseFloat(cols[1]) || 0
+    const weight = parseFloat(cols[2]) || 0
+    const head   = parseFloat(cols[3]) || 0
+    if (!height && !weight && !head) continue
+    growthRows.push({ date, weight_kg: weight > 0 ? weight : '', height_cm: height > 0 ? height : '', head_cm: head > 0 ? head : '', notes: '' })
+  }
 }
 
-// ─────────────────────────────────────────────────────────
-// 2. 親餵（加入 feeding CSV 中，type=breast）
-// ─────────────────────────────────────────────────────────
-const breastRaw = `2026/01/13 16:14\t28\t0
-2026/01/08 22:41\t0\t10
-2026/01/08 21:48\t30\t0
-2026/01/07 05:42\t0\t43
-2026/01/06 23:46\t21\t0
-2026/01/06 07:39\t0\t21
-2026/01/05 22:54\t24\t0
-2026/01/04 21:47\t13\t0
-2026/01/04 21:33\t0\t12
-2026/01/04 06:33\t14\t0
-2026/01/03 21:39\t18\t0
-2026/01/03 21:10\t0\t20
-2026/01/02 00:10\t0\t20
-2026/01/01 23:22\t0\t15
-2026/01/01 22:49\t10\t0
-2026/01/01 22:36\t13\t0
-2026/01/01 11:48\t0\t7
-2025/12/31 21:32\t3\t0
-2025/12/31 21:30\t1\t0
-2025/12/31 21:23\t6\t0
-2025/12/31 14:14\t0\t18
-2025/12/30 20:52\t0\t5
-2025/12/29 16:00\t0\t8
-2025/12/29 15:25\t26\t0
-2025/12/27 23:15\t10\t5
-2025/12/27 06:29\t0\t7
-2025/12/26 22:39\t8\t0
-2025/12/26 07:38\t0\t4
-2025/12/24 17:51\t5\t0
-2025/12/24 17:32\t0\t11
-2025/12/23 06:46\t6\t0
-2025/12/23 06:15\t0\t17
-2025/12/22 14:51\t4\t0
-2025/12/22 06:30\t0\t3
-2025/12/21 21:46\t16\t0
-2025/12/21 20:39\t0\t3
-2025/12/21 20:28\t0\t10
-2025/12/21 05:21\t0\t4
-2025/12/20 22:26\t5\t0
-2025/12/19 23:03\t0\t15
-2025/12/19 21:25\t0\t7
-2025/12/18 19:48\t5\t10
-2025/12/18 07:53\t15\t0
-2025/12/17 22:04\t6\t25
-2025/12/16 22:00\t0\t5`
-
-for (const line of breastRaw.trim().split('\n')) {
-  const cols = line.split('\t').map(s => s.trim())
-  if (cols.length < 3) continue
-  const dt = parseDateTime(cols[0])
-  if (!dt) continue
-  const left = parseInt(cols[1]) || 0
-  const right = parseInt(cols[2]) || 0
-  const duration = left + right
-  const side = (left > 0 && right > 0) ? 'both' : (left > 0 ? 'left' : 'right')
-  feedingRows.push({ date: dt.date, time: dt.time, type: 'breast', amount_ml: '', duration_min: duration || '', side, notes: '' })
-}
-
-// Sort by date then time
 feedingRows.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))
 
 fs.writeFileSync(path.join(OUT, 'feeding.csv'), toCsv(feedingRows, ['date','time','type','amount_ml','duration_min','side','notes']))
+fs.writeFileSync(path.join(OUT, 'diaper.csv'),  toCsv(diaperRows,  ['date','time','type','notes']))
+fs.writeFileSync(path.join(OUT, 'growth.csv'),  toCsv(growthRows,  ['date','weight_kg','height_cm','head_cm','notes']))
+
 console.log(`✅ feeding.csv — ${feedingRows.length} 筆`)
-
-// ─────────────────────────────────────────────────────────
-// 3. 尿布
-// ─────────────────────────────────────────────────────────
-const diaperRaw = `2026/04/11 17:29\t混合
-2026/04/11 15:09\t尿尿
-2026/04/11 12:15\t尿尿
-2026/04/11 00:05\t尿尿
-2026/04/10 16:00\t尿尿
-2026/04/10 14:30\t尿尿
-2026/04/10 11:29\t混合
-2026/04/10 10:15\t尿尿
-2026/04/10 07:30\t混合
-2026/04/09 22:07\t尿尿
-2026/04/09 16:00\t尿尿
-2026/04/09 14:30\t尿尿
-2026/04/09 11:00\t尿尿
-2026/04/09 08:40\t混合
-2026/04/09 06:44\t大便
-2026/04/08 22:03\t尿尿
-2026/04/08 16:00\t尿尿
-2026/04/08 14:29\t尿尿
-2026/04/08 11:29\t尿尿
-2026/04/08 10:29\t尿尿
-2026/04/08 08:00\t尿尿
-2026/04/07 20:55\t尿尿
-2026/04/07 16:04\t混合
-2026/04/07 14:30\t尿尿
-2026/04/07 11:20\t尿尿
-2026/04/07 10:04\t尿尿
-2026/04/07 07:08\t混合
-2026/04/06 21:25\t尿尿
-2026/04/06 14:00\t尿尿
-2026/04/06 11:20\t尿尿
-2026/04/06 07:00\t尿尿
-2026/04/05 22:07\t尿尿
-2026/04/05 18:48\t尿尿
-2026/04/05 15:29\t尿尿
-2026/04/05 12:30\t混合
-2026/04/05 07:20\t混合
-2026/04/05 01:03\t尿尿
-2026/04/04 20:23\t混合
-2026/04/04 16:50\t尿尿
-2026/04/04 12:08\t尿尿
-2026/04/04 09:07\t尿尿
-2026/04/04 03:04\t尿尿
-2026/04/03 21:56\t尿尿
-2026/04/03 19:00\t尿尿
-2026/04/03 17:00\t尿尿
-2026/04/03 11:15\t尿尿
-2026/04/03 08:50\t尿尿
-2026/04/03 05:45\t混合
-2026/04/02 23:51\t尿尿
-2026/04/02 18:10\t尿尿
-2026/04/02 16:00\t尿尿
-2026/04/02 14:30\t尿尿
-2026/04/02 11:30\t尿尿
-2026/04/02 10:00\t尿尿
-2026/04/02 06:50\t混合
-2026/04/02 04:51\t尿尿
-2026/04/01 20:17\t尿尿
-2026/04/01 17:06\t混合
-2026/04/01 16:09\t尿尿
-2026/04/01 14:30\t尿尿
-2026/04/01 11:21\t尿尿
-2026/04/01 10:08\t尿尿
-2026/04/01 06:47\t混合
-2026/03/31 23:05\t尿尿
-2026/03/31 19:00\t尿尿
-2026/03/31 16:00\t尿尿
-2026/03/31 14:30\t尿尿
-2026/03/31 11:20\t尿尿
-2026/03/31 10:05\t尿尿
-2026/03/31 06:20\t尿尿`
-
-const typeMap = { 尿尿: 'wet', 大便: 'dirty', 混合: 'mixed', 乾淨: 'dry' }
-const diaperRows = []
-for (const line of diaperRaw.trim().split('\n')) {
-  const cols = line.split('\t').map(s => s.trim())
-  if (cols.length < 2) continue
-  const dt = parseDateTime(cols[0])
-  if (!dt) continue
-  diaperRows.push({ date: dt.date, time: dt.time, type: typeMap[cols[1]] || 'wet', notes: '' })
-}
-
-fs.writeFileSync(path.join(OUT, 'diaper.csv'), toCsv(diaperRows, ['date','time','type','notes']))
 console.log(`✅ diaper.csv  — ${diaperRows.length} 筆`)
-
-// ─────────────────────────────────────────────────────────
-// 4. 成長紀錄
-// ─────────────────────────────────────────────────────────
-const growthRaw = `2026/03/24\t64.1\t7.40\t41.5
-2026/02/24\t62.7\t7.10\t41.0
-2026/02/18\t0.0\t7.20\t0.0
-2026/02/07\t0.0\t7.00\t0.0
-2026/01/25\t0.0\t6.50\t0.0
-2026/01/20\t59.5\t6.20\t39.5
-2026/01/10\t0.0\t6.30\t0.0
-2026/01/06\t0.0\t0.00\t38.0
-2026/01/04\t0.0\t5.80\t0.0
-2025/12/28\t0.0\t5.40\t0.0
-2025/12/27\t0.0\t0.00\t38.0
-2025/12/23\t58.6\t5.30\t36.5
-2025/12/21\t0.0\t5.20\t0.0
-2025/12/18\t58.0\t0.00\t0.0
-2025/12/13\t0.0\t4.90\t0.0
-2025/12/06\t0.0\t4.70\t0.0
-2025/11/27\t0.0\t4.50\t0.0
-2025/11/23\t0.0\t4.20\t0.0
-2025/11/19\t0.0\t3.92\t0.0
-2025/11/18\t52.8\t3.92\t36.0
-2025/11/17\t0.0\t3.88\t0.0
-2025/11/16\t0.0\t3.85\t0.0
-2025/11/15\t0.0\t3.82\t0.0
-2025/11/14\t0.0\t3.81\t0.0
-2025/11/13\t0.0\t3.80\t0.0
-2025/11/12\t0.0\t3.76\t0.0
-2025/11/11\t0.0\t3.71\t0.0
-2025/11/10\t0.0\t3.71\t0.0
-2025/11/09\t0.0\t3.63\t0.0
-2025/11/08\t0.0\t3.60\t0.0
-2025/11/07\t0.0\t3.58\t0.0
-2025/11/06\t0.0\t3.59\t0.0
-2025/11/05\t0.0\t3.53\t0.0
-2025/11/04\t0.0\t3.50\t0.0
-2025/11/03\t0.0\t3.45\t0.0
-2025/11/02\t0.0\t3.42\t0.0
-2025/11/01\t0.0\t3.38\t0.0
-2025/10/30\t0.0\t3.29\t0.0
-2025/10/29\t0.0\t3.28\t0.0
-2025/10/28\t0.0\t3.22\t0.0
-2025/10/27\t0.0\t3.20\t0.0
-2025/10/26\t0.0\t3.18\t0.0
-2025/10/25\t0.0\t3.18\t0.0
-2025/10/24\t0.0\t3.15\t0.0
-2025/10/23\t0.0\t3.12\t0.0
-2025/10/22\t49.0\t3.10\t34.0
-2025/10/17\t49.0\t3.15\t0.0`
-
-const growthRows = []
-for (const line of growthRaw.trim().split('\n')) {
-  const cols = line.split('\t').map(s => s.trim())
-  if (cols.length < 4) continue
-  const date = parseDate(cols[0])
-  if (!date) continue
-  const height = parseFloat(cols[1]) || 0
-  const weight = parseFloat(cols[2]) || 0
-  const head   = parseFloat(cols[3]) || 0
-  // Only include if at least one measurement exists
-  if (!height && !weight && !head) continue
-  growthRows.push({
-    date,
-    weight_kg:  weight > 0 ? weight : '',
-    height_cm:  height > 0 ? height : '',
-    head_cm:    head   > 0 ? head   : '',
-    notes: '',
-  })
-}
-
-fs.writeFileSync(path.join(OUT, 'growth.csv'), toCsv(growthRows, ['date','weight_kg','height_cm','head_cm','notes']))
 console.log(`✅ growth.csv  — ${growthRows.length} 筆`)
-
 console.log(`\n📁 檔案已輸出到 imports/ 資料夾`)
