@@ -1,0 +1,48 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  # 允許手動從 Actions 頁面觸發
+  workflow_dispatch:
+
+# 設定 GITHUB_TOKEN 的權限，讓 Actions 可以部署到 GitHub Pages
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          GITHUB_ACTIONS: true
+          # 只注入非機密設定（owner/repo 不是 secret）
+          # ⚠️ PAT 絕不在此注入 — 使用者在 App 設定頁手動輸入，存於本機 localStorage
+          VITE_GH_OWNER: ${{ secrets.GH_OWNER }}
+          VITE_GH_REPO: ${{ secrets.GH_REPO }}
+
+      - name: Deploy to GitHub Pages (gh-pages branch)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          enable_jekyll: false
