@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { Save, Plus, Trash2, Github, Database, Bell, Info, ChevronRight, Eye, EyeOff } from 'lucide-react'
+import { Save, Plus, Trash2, Github, Database, Bell, Info, ChevronRight, Eye, EyeOff, FileUp } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { generateId } from '../services/github'
 import Modal from '../components/Modal'
@@ -8,6 +9,7 @@ import toast from 'react-hot-toast'
 const AVATARS = ['👶', '🧒', '👦', '👧', '🐣', '🌸', '⭐', '🌈']
 
 export default function Settings() {
+  const navigate = useNavigate()
   const { github, isGitHubConfigured, autoConfigured, babies, activeBabyId, updateGitHub, saveBaby, setActiveBaby } = useApp()
   const [githubForm, setGithubForm] = useState({ ...github })
   const [showToken, setShowToken] = useState(false)
@@ -140,6 +142,25 @@ export default function Settings() {
             </p>
           </div>
         </div>
+      </Section>
+
+      {/* Data Import */}
+      <Section title="資料匯入" icon="📥">
+        <p className="text-xs text-gray-500 mb-3">
+          將其他寶寶記錄 App 的資料以 CSV 格式匯出後，即可匯入到這裡。支援喝奶、睡眠、尿布、成長記錄。
+        </p>
+        <button
+          onClick={() => navigate('/import')}
+          className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-pink-50 hover:border-pink-200 transition-colors touch-manipulation"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center">
+              <FileUp size={16} className="text-pink-500" />
+            </div>
+            <span className="text-sm font-medium text-gray-700">CSV 資料匯入</span>
+          </div>
+          <ChevronRight size={16} className="text-gray-400" />
+        </button>
       </Section>
 
       {/* App info */}
