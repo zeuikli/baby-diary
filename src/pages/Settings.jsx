@@ -255,7 +255,13 @@ export default function Settings() {
         <div className="space-y-2 text-sm text-gray-500">
           <div className="flex justify-between">
             <span>版本</span>
-            <span>1.0.0</span>
+            <span className="font-mono text-xs">
+              {__APP_VERSION__} <span className="text-gray-400">({__APP_COMMIT__})</span>
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span>建置日期</span>
+            <span className="font-mono text-xs">{__APP_BUILD_DATE__}</span>
           </div>
           <div className="flex justify-between">
             <span>資料儲存</span>

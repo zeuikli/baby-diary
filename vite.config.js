@@ -1,13 +1,34 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { execSync } from 'node:child_process'
 
 // When building for GitHub Pages, base is /baby-diary/
 // In local dev, base is /
 const base = process.env.GITHUB_ACTIONS ? '/baby-diary/' : '/'
 
+// Derive version info from git at build time so the "關於" section reflects
+// the actual commit it was built from. Fallbacks are used if git is missing
+// (e.g. extracted source tarball).
+function safeGit(cmd, fallback) {
+  try {
+    return execSync(cmd, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+  } catch {
+    return fallback
+  }
+}
+const commitCount = safeGit('git rev-list --count HEAD', '0')
+const commitSha = safeGit('git rev-parse --short HEAD', 'unknown')
+const buildDate = new Date().toISOString().slice(0, 10)
+const appVersion = `1.0.${commitCount}`
+
 export default defineConfig({
   base,
+  define: {
+    __APP_VERSION__: JSON.stringify(appVersion),
+    __APP_COMMIT__: JSON.stringify(commitSha),
+    __APP_BUILD_DATE__: JSON.stringify(buildDate),
+  },
   plugins: [
     react(),
     VitePWA({
