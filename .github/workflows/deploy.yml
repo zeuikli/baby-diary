@@ -21,6 +21,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # 抓完整 git 歷史，讓 vite.config.js 的 git rev-list --count HEAD
+          # 能算出正確的 commit 總數，版本號才不會固定顯示 1.0.1
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
