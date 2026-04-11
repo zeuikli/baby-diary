@@ -35,6 +35,10 @@ jobs:
         run: npm run build
         env:
           GITHUB_ACTIONS: true
+          # 從 GitHub Secrets 注入，建置時嵌入 App（不出現在原始碼）
+          VITE_GH_TOKEN: ${{ secrets.GH_PAT }}
+          VITE_GH_OWNER: ${{ secrets.GH_OWNER }}
+          VITE_GH_REPO: ${{ secrets.GH_REPO }}
 
       - name: Deploy to GitHub Pages (gh-pages branch)
         uses: peaceiris/actions-gh-pages@v4

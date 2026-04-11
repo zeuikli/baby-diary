@@ -9,6 +9,7 @@ const initialState = {
   // Settings
   github: { token: '', owner: '', repo: '' },
   isGitHubConfigured: false,
+  autoConfigured: false, // true = injected from build-time secret
 
   // Babies
   babies: [],
@@ -69,13 +70,26 @@ function reducer(state, action) {
   }
 }
 
+// Env vars injected at build time by GitHub Actions (from Secrets)
+// These are baked into the production bundle — keep the PAT scope minimal
+const ENV_TOKEN = import.meta.env.VITE_GH_TOKEN || ''
+const ENV_OWNER = import.meta.env.VITE_GH_OWNER || ''
+const ENV_REPO  = import.meta.env.VITE_GH_REPO  || ''
+
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
   // Load settings on mount
   useEffect(() => {
     const saved = settingsStore.get()
-    const github = saved.github || { token: '', owner: '', repo: '' }
+
+    // Priority: env (build-time secret) > localStorage (manual settings)
+    const github = {
+      token: ENV_TOKEN || saved.github?.token || '',
+      owner: ENV_OWNER || saved.github?.owner || '',
+      repo:  ENV_REPO  || saved.github?.repo  || '',
+    }
+
     const babies = saved.babies || []
     const activeBabyId = saved.activeBabyId || (babies[0]?.id ?? null)
 
@@ -86,6 +100,7 @@ export function AppProvider({ children }) {
         isGitHubConfigured: !!(github.token && github.owner && github.repo),
         babies,
         activeBabyId,
+        autoConfigured: !!(ENV_TOKEN && ENV_OWNER && ENV_REPO),
       }
     })
 
