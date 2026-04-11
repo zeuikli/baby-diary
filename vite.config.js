@@ -19,7 +19,16 @@ function safeGit(cmd, fallback) {
 }
 const commitCount = safeGit('git rev-list --count HEAD', '0')
 const commitSha = safeGit('git rev-parse --short HEAD', 'unknown')
-const buildDate = new Date().toISOString().slice(0, 10)
+// Build timestamp in Taiwan time (UTC+8), format: YYYY-MM-DD HH:mm
+const buildDate = new Intl.DateTimeFormat('sv-SE', {
+  timeZone: 'Asia/Taipei',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+}).format(new Date()).replace(',', '')
 const appVersion = `1.0.${commitCount}`
 
 export default defineConfig({

@@ -260,8 +260,8 @@ export default function Settings() {
             </span>
           </div>
           <div className="flex justify-between">
-            <span>建置日期</span>
-            <span className="font-mono text-xs">{__APP_BUILD_DATE__}</span>
+            <span>建置時間</span>
+            <span className="font-mono text-xs">{__APP_BUILD_DATE__} <span className="text-gray-400">(UTC+8)</span></span>
           </div>
           <div className="flex justify-between">
             <span>資料儲存</span>
