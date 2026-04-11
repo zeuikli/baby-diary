@@ -194,7 +194,7 @@ export default function Settings() {
         <div className="flex gap-2">
           <button
             onClick={handleCopyShareCode}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-pink-200 bg-pink-50 text-pink-600 text-sm font-medium hover:bg-pink-100 transition-colors touch-manipulation"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-600 text-sm font-medium hover:bg-gray-100 transition-colors touch-manipulation"
           >
             <Copy size={15} /> 複製設定碼
           </button>
