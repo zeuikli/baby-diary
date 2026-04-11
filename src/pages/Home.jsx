@@ -37,6 +37,8 @@ export default function Home() {
     )
   }
 
+  const babyAge = getBabyAge(activeBaby?.birthdate)
+
   const handleQuickAction = (id) => {
     if (id === 'feeding') setActiveModal('feeding')
     else if (id === 'sleep') setActiveModal('sleep')
@@ -61,6 +63,23 @@ export default function Home() {
 
   return (
     <div className="px-4 pt-4 space-y-4 animate-fade-in">
+      {/* Baby info banner */}
+      {activeBaby && (
+        <div className="flex items-center gap-3 px-1">
+          <span className="text-3xl leading-none">{activeBaby.avatar || '👶'}</span>
+          <div>
+            <p className="text-base font-semibold text-gray-800">{activeBaby.name}</p>
+            {babyAge ? (
+              <p className="text-xs text-pink-400 font-medium">
+                出生 {babyAge.months} 個月 {babyAge.days} 天
+              </p>
+            ) : activeBaby.birthdate ? null : (
+              <p className="text-xs text-gray-400">尚未設定生日</p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Active sleep timer */}
       {activeSleep && (
         <div className="card border-l-4 border-purple-300 bg-purple-50">
@@ -166,6 +185,20 @@ export default function Home() {
       )}
     </div>
   )
+}
+
+function getBabyAge(birthdate) {
+  if (!birthdate) return null
+  const birth = new Date(birthdate)
+  const now = new Date()
+  if (isNaN(birth.getTime()) || birth > now) return null
+  let months = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
+  let days = now.getDate() - birth.getDate()
+  if (days < 0) {
+    months--
+    days += new Date(now.getFullYear(), now.getMonth(), 0).getDate()
+  }
+  return { months, days }
 }
 
 function SummaryCard({ icon, value, label, color, bg, onClick }) {
