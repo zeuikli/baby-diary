@@ -135,20 +135,25 @@ export default function Growth() {
 
   const hasAnyLatest = latestByMetric.weight || latestByMetric.height || latestByMetric.headCirc
 
-  // Build merged chart data: WHO reference points + baby records, indexed by age (months)
+  // Build merged chart data: WHO reference points + baby records, indexed by
+  // age (months). Both the WHO reference curves and baby records are clipped
+  // to the 0-24 month chart window so the dashed lines don't extend beyond it.
+  const CHART_MAX_AGE = 24
   const chartData = useMemo(() => {
     const whoRef = getWhoReference(activeTab, activeBaby?.gender)
     const map = new Map()
-    // WHO reference points
-    whoRef.forEach(d => {
-      map.set(d.age, { age: d.age, p3: d.p3, p50: d.p50, p97: d.p97 })
-    })
-    // Baby records (only those with a value for the active metric)
+    // WHO reference points within 0-24 months
+    whoRef
+      .filter(d => d.age <= CHART_MAX_AGE)
+      .forEach(d => {
+        map.set(d.age, { age: d.age, p3: d.p3, p50: d.p50, p97: d.p97 })
+      })
+    // Baby records within 0-24 months (only those with a value for the active metric)
     records.forEach(r => {
       const val = r[activeTabConfig.dataKey]
       if (val == null || val === '') return
       const age = getBabyAgeMonths(r.date)
-      if (age == null) return
+      if (age == null || age > CHART_MAX_AGE) return
       const existing = map.get(age) || { age }
       map.set(age, { ...existing, baby: val, recordDate: r.date })
     })
