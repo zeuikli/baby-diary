@@ -4,3 +4,6 @@ dist/
 .env.local
 .DS_Store
 *.log
+
+# 個人資料匯入檔案，不納入版控
+imports/
