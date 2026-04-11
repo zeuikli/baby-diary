@@ -5,5 +5,6 @@ dist/
 .DS_Store
 *.log
 
-# 個人資料匯入檔案，不納入版控
-imports/
+# 個人資料匯入檔案，不納入版控（範本除外）
+imports/*.csv
+imports/BabyDiary*.csv
