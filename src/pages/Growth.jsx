@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
@@ -9,31 +9,12 @@ import { ls } from '../services/localStorage'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
 import toast from 'react-hot-toast'
+import { getWhoReference } from '../data/whoStandards'
 
 function getCurrentDate() {
   const now = new Date()
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 }
-
-// WHO growth reference curves (simplified)
-const WHO_WEIGHT_GIRLS = [
-  { age: 0, p3: 2.4, p50: 3.2, p97: 4.2 },
-  { age: 1, p3: 3.2, p50: 4.2, p97: 5.5 },
-  { age: 2, p3: 4.0, p50: 5.1, p97: 6.6 },
-  { age: 3, p3: 4.6, p50: 5.8, p97: 7.5 },
-  { age: 6, p3: 5.7, p50: 7.3, p97: 9.3 },
-  { age: 9, p3: 6.7, p50: 8.2, p97: 10.4 },
-  { age: 12, p3: 7.1, p50: 9.0, p97: 11.5 },
-]
-const WHO_WEIGHT_BOYS = [
-  { age: 0, p3: 2.5, p50: 3.3, p97: 4.4 },
-  { age: 1, p3: 3.4, p50: 4.5, p97: 5.8 },
-  { age: 2, p3: 4.3, p50: 5.6, p97: 7.1 },
-  { age: 3, p3: 5.1, p50: 6.4, p97: 8.0 },
-  { age: 6, p3: 6.4, p50: 7.9, p97: 9.7 },
-  { age: 9, p3: 7.2, p50: 9.0, p97: 11.0 },
-  { age: 12, p3: 7.8, p50: 9.9, p97: 12.0 },
-]
 
 export default function Growth() {
   const { activeBabyId, activeBaby, isGitHubConfigured } = useApp()
@@ -110,24 +91,17 @@ export default function Growth() {
     toast.success('已刪除')
   }
 
-  // Compute baby age in months at each record
-  const getBabyAge = (recordDate) => {
+  // Compute baby age in months at a given date (with fractional precision)
+  const getBabyAgeMonths = useCallback((recordDate) => {
     if (!activeBaby?.birthdate) return null
     const birth = new Date(activeBaby.birthdate + 'T00:00:00')
     const rec = new Date(recordDate + 'T00:00:00')
-    const months = (rec.getFullYear() - birth.getFullYear()) * 12 + (rec.getMonth() - birth.getMonth())
-    return Math.max(0, months)
-  }
-
-  const chartData = records.map(r => ({
-    date: r.date.slice(5), // MM-DD
-    age: getBabyAge(r.date),
-    weight: r.weight,
-    height: r.height,
-    headCirc: r.headCirc,
-  }))
-
-  const whoData = activeBaby?.gender === 'girl' ? WHO_WEIGHT_GIRLS : WHO_WEIGHT_BOYS
+    const diffMs = rec - birth
+    if (diffMs < 0) return 0
+    // Average month length ~ 30.4375 days
+    const months = diffMs / (1000 * 60 * 60 * 24 * 30.4375)
+    return Math.round(months * 10) / 10
+  }, [activeBaby])
 
   const tabs = [
     { id: 'weight', label: '體重', icon: '⚖️', unit: 'kg', dataKey: 'weight', color: '#f472b6' },
@@ -136,20 +110,75 @@ export default function Growth() {
   ]
 
   const activeTabConfig = tabs.find(t => t.id === activeTab)
-  const latest = records[records.length - 1]
+
+  // Latest value per metric — each metric finds its own most recent non-null record
+  const latestByMetric = useMemo(() => {
+    const pick = (key) => {
+      for (let i = records.length - 1; i >= 0; i--) {
+        if (records[i][key] != null && records[i][key] !== '') return records[i]
+      }
+      return null
+    }
+    return {
+      weight: pick('weight'),
+      height: pick('height'),
+      headCirc: pick('headCirc'),
+    }
+  }, [records])
+
+  const hasAnyLatest = latestByMetric.weight || latestByMetric.height || latestByMetric.headCirc
+
+  // Build merged chart data: WHO reference points + baby records, indexed by age (months)
+  const chartData = useMemo(() => {
+    const whoRef = getWhoReference(activeTab, activeBaby?.gender)
+    const map = new Map()
+    // WHO reference points
+    whoRef.forEach(d => {
+      map.set(d.age, { age: d.age, p3: d.p3, p50: d.p50, p97: d.p97 })
+    })
+    // Baby records (only those with a value for the active metric)
+    records.forEach(r => {
+      const val = r[activeTabConfig.dataKey]
+      if (val == null || val === '') return
+      const age = getBabyAgeMonths(r.date)
+      if (age == null) return
+      const existing = map.get(age) || { age }
+      map.set(age, { ...existing, baby: val, recordDate: r.date })
+    })
+    return Array.from(map.values()).sort((a, b) => a.age - b.age)
+  }, [records, activeTab, activeTabConfig.dataKey, activeBaby, getBabyAgeMonths])
+
+  const babyPointCount = chartData.filter(d => d.baby != null).length
 
   return (
     <div className="px-4 pt-4 pb-4 space-y-4 animate-fade-in">
-      {/* Latest stats */}
-      {latest && (
+      {/* Latest stats — each metric shows its own most recent value with its own date */}
+      {hasAnyLatest && (
         <div className="card">
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">最新數值</h2>
           <div className="grid grid-cols-3 gap-3">
-            {latest.weight && <StatCard icon="⚖️" value={`${latest.weight}kg`} label="體重" color="text-pink-500" />}
-            {latest.height && <StatCard icon="📏" value={`${latest.height}cm`} label="身高" color="text-blue-500" />}
-            {latest.headCirc && <StatCard icon="🧢" value={`${latest.headCirc}cm`} label="頭圍" color="text-green-500" />}
+            <StatCard
+              icon="⚖️"
+              value={latestByMetric.weight ? `${latestByMetric.weight.weight}kg` : '—'}
+              label="體重"
+              date={latestByMetric.weight?.date}
+              color="text-pink-500"
+            />
+            <StatCard
+              icon="📏"
+              value={latestByMetric.height ? `${latestByMetric.height.height}cm` : '—'}
+              label="身高"
+              date={latestByMetric.height?.date}
+              color="text-blue-500"
+            />
+            <StatCard
+              icon="🧢"
+              value={latestByMetric.headCirc ? `${latestByMetric.headCirc.headCirc}cm` : '—'}
+              label="頭圍"
+              date={latestByMetric.headCirc?.date}
+              color="text-green-500"
+            />
           </div>
-          <p className="text-xs text-gray-400 mt-2">記錄於 {latest.date}</p>
         </div>
       )}
 
@@ -169,31 +198,66 @@ export default function Growth() {
           ))}
         </div>
 
-        {chartData.filter(d => d[activeTabConfig.dataKey]).length < 2 ? (
+        {babyPointCount === 0 ? (
           <div className="text-center py-8 text-gray-400 text-sm">
             <p className="text-3xl mb-2">📈</p>
-            <p>至少需要 2 筆記錄才能顯示圖表</p>
+            <p>尚未有{activeTabConfig.label}記錄</p>
+            <p className="text-xs mt-1">新增記錄後即可對照 WHO 生長曲線</p>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={chartData.filter(d => d[activeTabConfig.dataKey])} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-              <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} />
-              <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} />
-              <Tooltip
-                contentStyle={{ borderRadius: '12px', border: '1px solid #fce7f3', fontSize: 12 }}
-                formatter={(val) => [`${val}${activeTabConfig.unit}`, activeTabConfig.label]}
-              />
-              <Line
-                type="monotone"
-                dataKey={activeTabConfig.dataKey}
-                stroke={activeTabConfig.color}
-                strokeWidth={2.5}
-                dot={{ fill: activeTabConfig.color, r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <>
+            <ResponsiveContainer width="100%" height={240}>
+              <LineChart data={chartData} margin={{ top: 5, right: 10, left: -15, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                <XAxis
+                  dataKey="age"
+                  type="number"
+                  domain={[0, 60]}
+                  ticks={[0, 6, 12, 18, 24, 30, 36, 42, 48, 54, 60]}
+                  tick={{ fontSize: 11, fill: '#9ca3af' }}
+                  label={{ value: '月齡', position: 'insideBottomRight', offset: -2, fontSize: 11, fill: '#9ca3af' }}
+                />
+                <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                <Tooltip
+                  contentStyle={{ borderRadius: '12px', border: '1px solid #fce7f3', fontSize: 12 }}
+                  labelFormatter={(age) => `${age} 個月`}
+                  formatter={(val, name) => {
+                    if (val == null) return null
+                    const labelMap = { baby: activeTabConfig.label, p3: 'WHO 3%', p50: 'WHO 50%', p97: 'WHO 97%' }
+                    return [`${val}${activeTabConfig.unit}`, labelMap[name] || name]
+                  }}
+                />
+                <Legend wrapperStyle={{ fontSize: 11 }} iconSize={10} />
+                {/* WHO percentile reference curves */}
+                <Line
+                  type="monotone" dataKey="p97" name="WHO 97%"
+                  stroke="#d1d5db" strokeWidth={1.5} strokeDasharray="4 4"
+                  dot={false} activeDot={false} connectNulls isAnimationActive={false}
+                />
+                <Line
+                  type="monotone" dataKey="p50" name="WHO 50%"
+                  stroke="#9ca3af" strokeWidth={1.5} strokeDasharray="4 4"
+                  dot={false} activeDot={false} connectNulls isAnimationActive={false}
+                />
+                <Line
+                  type="monotone" dataKey="p3" name="WHO 3%"
+                  stroke="#d1d5db" strokeWidth={1.5} strokeDasharray="4 4"
+                  dot={false} activeDot={false} connectNulls isAnimationActive={false}
+                />
+                {/* Baby's own data */}
+                <Line
+                  type="monotone" dataKey="baby" name={activeTabConfig.label}
+                  stroke={activeTabConfig.color} strokeWidth={2.5}
+                  dot={{ fill: activeTabConfig.color, r: 4 }}
+                  activeDot={{ r: 6 }}
+                  connectNulls
+                />
+              </LineChart>
+            </ResponsiveContainer>
+            <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">
+              虛線為世界衛生組織 (WHO) 公布之 0-5 歲國際嬰幼兒生長標準百分位曲線 (P3 / P50 / P97)，依寶寶性別自動對應。
+            </p>
+          </>
         )}
       </div>
 
@@ -272,12 +336,13 @@ export default function Growth() {
   )
 }
 
-function StatCard({ icon, value, label, color }) {
+function StatCard({ icon, value, label, color, date }) {
   return (
     <div className="text-center bg-gray-50 rounded-xl p-2">
       <div className="text-lg">{icon}</div>
       <div className={`text-sm font-bold ${color}`}>{value}</div>
       <div className="text-xs text-gray-400">{label}</div>
+      {date && <div className="text-[10px] text-gray-400 mt-0.5">{date.slice(5)}</div>}
     </div>
   )
 }
