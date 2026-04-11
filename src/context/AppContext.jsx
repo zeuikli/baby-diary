@@ -106,6 +106,21 @@ export function AppProvider({ children }) {
 
     if (github.token && github.owner && github.repo) {
       githubService.init(github)
+      // Sync babies from GitHub on startup so other devices see up-to-date list
+      githubService.getBabies().then(remoteBabies => {
+        if (remoteBabies.length === 0) return
+        const localBabies = saved.babies || []
+        const localActiveId = saved.activeBabyId || (localBabies[0]?.id ?? null)
+        const map = new Map(localBabies.map(b => [b.id, b]))
+        remoteBabies.forEach(b => map.set(b.id, b))
+        const merged = Array.from(map.values())
+        dispatch({ type: 'SET_BABIES', payload: merged })
+        settingsStore.update({ babies: merged })
+        if (!localActiveId && merged.length > 0) {
+          dispatch({ type: 'SET_ACTIVE_BABY', payload: merged[0].id })
+          settingsStore.update({ activeBabyId: merged[0].id })
+        }
+      }).catch(() => {})
     }
   }, [])
 
@@ -206,6 +221,25 @@ export function AppProvider({ children }) {
     return baby
   }, [state.babies])
 
+  const syncBabiesFromGitHub = useCallback(async (localBabies, localActiveBabyId) => {
+    try {
+      const remoteBabies = await githubService.getBabies()
+      if (remoteBabies.length === 0) return false
+      const map = new Map(localBabies.map(b => [b.id, b]))
+      remoteBabies.forEach(b => map.set(b.id, b)) // remote overrides local
+      const merged = Array.from(map.values())
+      dispatch({ type: 'SET_BABIES', payload: merged })
+      settingsStore.update({ babies: merged })
+      if (!localActiveBabyId && merged.length > 0) {
+        dispatch({ type: 'SET_ACTIVE_BABY', payload: merged[0].id })
+        settingsStore.update({ activeBabyId: merged[0].id })
+      }
+      return remoteBabies.length
+    } catch {
+      return false
+    }
+  }, [])
+
   const updateGitHub = useCallback(async (config) => {
     dispatch({ type: 'SET_GITHUB', payload: config })
     settingsStore.update({ github: config })
@@ -213,13 +247,18 @@ export function AppProvider({ children }) {
 
     try {
       await githubService.verifyAccess()
-      toast.success('GitHub 連線成功！')
+      const synced = await syncBabiesFromGitHub(state.babies, state.activeBabyId)
+      if (synced) {
+        toast.success(`GitHub 連線成功，已同步 ${synced} 位寶寶 👶`)
+      } else {
+        toast.success('GitHub 連線成功！')
+      }
       return true
     } catch (e) {
       toast.error(`GitHub 連線失敗：${e.message}`)
       return false
     }
-  }, [])
+  }, [state.babies, state.activeBabyId, syncBabiesFromGitHub])
 
   const setSelectedDate = useCallback((date) => {
     dispatch({ type: 'SET_SELECTED_DATE', payload: date })

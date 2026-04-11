@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Save, Plus, Trash2, Github, Database, Bell, Info, ChevronRight, Eye, EyeOff, FileUp } from 'lucide-react'
+import { Save, Plus, Trash2, Github, Database, Bell, Info, ChevronRight, Eye, EyeOff, FileUp, Copy, ClipboardPaste } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { generateId } from '../services/github'
@@ -16,6 +16,31 @@ export default function Settings() {
   const [saving, setSaving] = useState(false)
   const [showBabyModal, setShowBabyModal] = useState(false)
   const [editBaby, setEditBaby] = useState(null)
+  const [shareCode, setShareCode] = useState('')
+  const [showShareCode, setShowShareCode] = useState(false)
+
+  const handleCopyShareCode = () => {
+    if (!isGitHubConfigured) { toast.error('請先完成 GitHub 設定'); return }
+    const code = btoa(JSON.stringify({ token: github.token, owner: github.owner, repo: github.repo }))
+    navigator.clipboard.writeText(code).then(() => toast.success('設定碼已複製，請透過私訊傳給家人'))
+    setShowShareCode(false)
+  }
+
+  const handleImportShareCode = async () => {
+    if (!shareCode.trim()) { toast.error('請貼上設定碼'); return }
+    try {
+      const config = JSON.parse(atob(shareCode.trim()))
+      if (!config.token || !config.owner || !config.repo) throw new Error()
+      setGithubForm(config)
+      setSaving(true)
+      await updateGitHub(config)
+      setSaving(false)
+      setShareCode('')
+      setShowShareCode(false)
+    } catch {
+      toast.error('設定碼無效，請確認內容正確')
+    }
+  }
 
   const handleSaveGitHub = async () => {
     if (!githubForm.token || !githubForm.owner || !githubForm.repo) {
@@ -142,6 +167,47 @@ export default function Settings() {
             </p>
           </div>
         </div>
+      </Section>
+
+      {/* Family share code */}
+      <Section title="家人協作" icon="👨‍👩‍👧">
+        <p className="text-xs text-gray-500 mb-3">
+          產生設定碼後，透過私訊傳給家人；家人貼上設定碼即可連線同一份資料，無需手動輸入帳號。
+        </p>
+        <div className="flex gap-2">
+          <button
+            onClick={handleCopyShareCode}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-pink-200 bg-pink-50 text-pink-600 text-sm font-medium hover:bg-pink-100 transition-colors touch-manipulation"
+          >
+            <Copy size={15} /> 複製設定碼
+          </button>
+          <button
+            onClick={() => setShowShareCode(v => !v)}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-600 text-sm font-medium hover:bg-gray-100 transition-colors touch-manipulation"
+          >
+            <ClipboardPaste size={15} /> 貼上設定碼
+          </button>
+        </div>
+        {showShareCode && (
+          <div className="mt-3 space-y-2">
+            <textarea
+              rows={3}
+              placeholder="將家人傳來的設定碼貼在這裡"
+              value={shareCode}
+              onChange={e => setShareCode(e.target.value)}
+              className="form-input resize-none text-xs font-mono"
+            />
+            <button
+              onClick={handleImportShareCode}
+              disabled={saving}
+              className="w-full btn-primary py-2.5 flex items-center justify-center gap-2"
+            >
+              {saving ? <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" /> : null}
+              {saving ? '連線中...' : '套用設定碼'}
+            </button>
+          </div>
+        )}
+        <p className="text-xs text-gray-400 mt-2">⚠️ 設定碼包含 PAT，請只透過私訊等私密管道分享</p>
       </Section>
 
       {/* Data Import */}
