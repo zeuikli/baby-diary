@@ -200,7 +200,11 @@ export default function Settings() {
           </button>
           <button
             onClick={() => setShowShareCode(v => !v)}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-600 text-sm font-medium hover:bg-gray-100 transition-colors touch-manipulation"
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-colors touch-manipulation ${
+              showShareCode
+                ? 'border-pink-300 bg-pink-100 text-pink-600'
+                : 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100'
+            }`}
           >
             <ClipboardPaste size={15} /> 貼上設定碼
           </button>
