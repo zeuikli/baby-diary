@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Save, Plus, Trash2, Github, Database, Bell, Info, ChevronRight, Eye, EyeOff, FileUp, Copy, ClipboardPaste } from 'lucide-react'
+import React, { useState, useRef, useEffect } from 'react'
+import { Save, Plus, Trash2, Github, Database, Bell, Info, ChevronRight, Eye, EyeOff, FileUp, Copy, ClipboardPaste, Check } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { generateId } from '../services/github'
@@ -19,11 +19,22 @@ export default function Settings() {
   const [editBaby, setEditBaby] = useState(null)
   const [shareCode, setShareCode] = useState('')
   const [showShareCode, setShowShareCode] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const copyTimeoutRef = useRef(null)
+
+  useEffect(() => () => {
+    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
+  }, [])
 
   const handleCopyShareCode = () => {
     if (!isGitHubConfigured) { toast.error('請先完成 GitHub 設定'); return }
     const code = btoa(JSON.stringify({ token: github.token, owner: github.owner, repo: github.repo }))
-    navigator.clipboard.writeText(code).then(() => toast.success('設定碼已複製，請透過私訊傳給家人'))
+    navigator.clipboard.writeText(code).then(() => {
+      toast.success('設定碼已複製，請透過私訊傳給家人')
+      setCopied(true)
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
+      copyTimeoutRef.current = setTimeout(() => setCopied(false), 1800)
+    })
     setShowShareCode(false)
   }
 
@@ -194,9 +205,21 @@ export default function Settings() {
         <div className="flex gap-2">
           <button
             onClick={handleCopyShareCode}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-600 text-sm font-medium hover:bg-gray-100 transition-colors touch-manipulation"
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-colors touch-manipulation ${
+              copied
+                ? 'border-green-300 bg-green-100 text-green-600'
+                : 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100'
+            }`}
           >
-            <Copy size={15} /> 複製設定碼
+            {copied ? (
+              <>
+                <Check size={15} /> 已複製
+              </>
+            ) : (
+              <>
+                <Copy size={15} /> 複製設定碼
+              </>
+            )}
           </button>
           <button
             onClick={() => setShowShareCode(v => !v)}
