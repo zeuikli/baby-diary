@@ -263,6 +263,7 @@ export default function Import() {
   const [quickPreview, setQuickPreview] = useState(null)  // { feeding, diaper, growth }
   const [quickImporting, setQuickImporting] = useState(false)
   const [quickDone, setQuickDone] = useState(null)
+  const [quickProgress, setQuickProgress] = useState(null) // { current, total, label }
 
   // Manual import state
   const manualRef = useRef()
@@ -270,6 +271,7 @@ export default function Import() {
   const [preview, setPreview] = useState(null)
   const [importing, setImporting] = useState(false)
   const [done, setDone] = useState(null)
+  const [manualProgress, setManualProgress] = useState(null) // { current, total, label }
 
   // ── Quick import handlers ──────────────────────────────────
 
@@ -296,23 +298,56 @@ export default function Import() {
     try {
       const { feeding, diaper, growth } = quickPreview
 
-      // Feeding (group by date)
+      // Group by date
       const feedByDate = {}
-      for (const { date, record } of feeding) { (feedByDate[date] = feedByDate[date] || []).push(record) }
-      for (const [date, records] of Object.entries(feedByDate)) {
-        await mergeAndSave(activeBabyId, date, 'feeding', records)
-      }
-
-      // Diaper (group by date)
       const diaperByDate = {}
-      for (const { date, record } of diaper) { (diaperByDate[date] = diaperByDate[date] || []).push(record) }
-      for (const [date, records] of Object.entries(diaperByDate)) {
-        await mergeAndSave(activeBabyId, date, 'diaper', records)
+      for (const { date, record } of feeding) { (feedByDate[date] = feedByDate[date] || []).push(record) }
+      for (const { date, record } of diaper)  { (diaperByDate[date] = diaperByDate[date] || []).push(record) }
+
+      // Merge all unique dates — feeding + diaper in ONE read+write per day
+      const allDates = [...new Set([...Object.keys(feedByDate), ...Object.keys(diaperByDate)])].sort()
+      const totalSteps = allDates.length + growth.length
+      let step = 0
+
+      for (const date of allDates) {
+        setQuickProgress({ current: step, total: totalSteps, label: date })
+
+        let dayRecord
+        if (githubService.isConfigured) {
+          dayRecord = await githubService.getDayRecord(activeBabyId, date)
+        } else {
+          dayRecord = ls.get(`day_${activeBabyId}_${date}`) || createEmptyDay(date, activeBabyId)
+        }
+
+        if (feedByDate[date]) {
+          const existing = dayRecord.feeding || []
+          const existingIds = new Set(existing.map(r => r.id))
+          dayRecord.feeding = [...existing, ...feedByDate[date].filter(r => !existingIds.has(r.id))]
+            .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
+        }
+        if (diaperByDate[date]) {
+          const existing = dayRecord.diaper || []
+          const existingIds = new Set(existing.map(r => r.id))
+          dayRecord.diaper = [...existing, ...diaperByDate[date].filter(r => !existingIds.has(r.id))]
+            .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
+        }
+
+        if (githubService.isConfigured) {
+          await githubService.saveDayRecordNow(activeBabyId, date, dayRecord)
+        } else {
+          ls.set(`day_${activeBabyId}_${date}`, dayRecord)
+        }
+        step++
       }
 
-      // Growth (one by one)
-      for (const { record } of growth) { await saveGrowthRecord(activeBabyId, record) }
+      // Growth records
+      for (const { record } of growth) {
+        setQuickProgress({ current: step, total: totalSteps, label: `成長 ${record.date}` })
+        await saveGrowthRecord(activeBabyId, record)
+        step++
+      }
 
+      setQuickProgress({ current: totalSteps, total: totalSteps, label: '完成' })
       const total = feeding.length + diaper.length + growth.length
       setQuickDone({ feeding: feeding.length, diaper: diaper.length, growth: growth.length, total })
       setQuickPreview(null)
@@ -322,6 +357,7 @@ export default function Import() {
       toast.error('匯入失敗：' + err.message)
     } finally {
       setQuickImporting(false)
+      setQuickProgress(null)
     }
   }
 
@@ -356,12 +392,18 @@ export default function Import() {
     setImporting(true)
     try {
       if (selectedType === 'growth') {
-        for (const { record } of preview.valid) await saveGrowthRecord(activeBabyId, record)
+        const total = preview.valid.length
+        for (let i = 0; i < total; i++) {
+          setManualProgress({ current: i, total, label: preview.valid[i].date })
+          await saveGrowthRecord(activeBabyId, preview.valid[i].record)
+        }
       } else {
         const byDate = {}
         for (const { date, record } of preview.valid) { (byDate[date] = byDate[date] || []).push(record) }
-        for (const [date, records] of Object.entries(byDate)) {
-          await mergeAndSave(activeBabyId, date, selectedType, records)
+        const dates = Object.keys(byDate).sort()
+        for (let i = 0; i < dates.length; i++) {
+          setManualProgress({ current: i, total: dates.length, label: dates[i] })
+          await mergeAndSave(activeBabyId, dates[i], selectedType, byDate[dates[i]])
         }
       }
       setDone(preview.valid.length); setPreview(null)
@@ -370,6 +412,7 @@ export default function Import() {
       console.error(err); toast.error('匯入失敗：' + err.message)
     } finally {
       setImporting(false)
+      setManualProgress(null)
     }
   }
 
@@ -450,13 +493,30 @@ export default function Import() {
                   </div>
                 ))}
               </div>
+              {quickImporting && quickProgress && (
+                <div className="mb-3">
+                  <div className="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>處理中：{quickProgress.label}</span>
+                    <span>{quickProgress.current} / {quickProgress.total}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2.5">
+                    <div
+                      className="bg-pink-400 h-2.5 rounded-full transition-all duration-300"
+                      style={{ width: `${Math.round((quickProgress.current / quickProgress.total) * 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 text-center mt-1">
+                    {Math.round((quickProgress.current / quickProgress.total) * 100)}%　資料量大時可能需要數分鐘，請勿關閉頁面
+                  </p>
+                </div>
+              )}
               <button
                 onClick={handleQuickImport}
                 disabled={quickImporting}
                 className="w-full btn-primary py-3 flex items-center justify-center gap-2"
               >
                 {quickImporting
-                  ? <><div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" /> 匯入中，請稍候...</>
+                  ? <><div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" /> 匯入中...</>
                   : `一鍵匯入全部 ${quickPreview.feeding.length + quickPreview.diaper.length + quickPreview.growth.length} 筆記錄`
                 }
               </button>
@@ -559,6 +619,23 @@ export default function Import() {
                     ))}
                     {preview.valid.length > 8 && <p className="text-xs text-center text-gray-400 py-1">…還有 {preview.valid.length-8} 筆</p>}
                   </div>
+                  {importing && manualProgress && (
+                    <div className="mb-3">
+                      <div className="flex justify-between text-xs text-gray-500 mb-1">
+                        <span>處理中：{manualProgress.label}</span>
+                        <span>{manualProgress.current} / {manualProgress.total}</span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2.5">
+                        <div
+                          className="bg-pink-400 h-2.5 rounded-full transition-all duration-300"
+                          style={{ width: `${Math.round((manualProgress.current / manualProgress.total) * 100)}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-gray-400 text-center mt-1">
+                        {Math.round((manualProgress.current / manualProgress.total) * 100)}%
+                      </p>
+                    </div>
+                  )}
                   <button onClick={handleImport} disabled={importing} className="w-full btn-primary py-3 flex items-center justify-center gap-2">
                     {importing ? <><div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" /> 匯入中...</> : `匯入全部 ${preview.valid.length} 筆記錄`}
                   </button>
