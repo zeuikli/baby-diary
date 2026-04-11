@@ -318,7 +318,7 @@ export default function Import() {
         </button>
         <div>
           <h1 className="text-base font-semibold text-gray-800">CSV 資料匯入</h1>
-          <p className="text-xs text-gray-400">將舊 App 匯出的資料匯入到寶寶日記</p>
+          <p className="text-xs text-gray-400">目前支援：寶寶成長日記</p>
         </div>
       </div>
 
@@ -442,16 +442,32 @@ export default function Import() {
         </div>
       )}
 
-      {/* Tips */}
+      {/* Supported apps */}
+      <div className="card">
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">支援的 App</h2>
+        <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-100 rounded-xl">
+          <span className="text-2xl">👶</span>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-800">寶寶成長日記</p>
+            <p className="text-xs text-gray-500 mt-0.5">iOS / Android</p>
+          </div>
+          <span className="text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded-lg">✓ 支援</span>
+        </div>
+        <p className="text-xs text-gray-400 mt-3 leading-relaxed">
+          其他 App 的匯出格式尚未支援。如需匯入，請先將 CSV 欄位手動對應至下方範本格式後再上傳。
+        </p>
+      </div>
+
+      {/* How to export from 寶寶成長日記 */}
       <div className="p-3 bg-blue-50 rounded-xl">
-        <p className="text-xs text-blue-700 font-medium mb-1">💡 使用提示</p>
-        <ul className="text-xs text-blue-600 space-y-1">
-          <li>• 先下載範本，對照格式填入資料</li>
-          <li>• 日期格式必須為 YYYY-MM-DD（如 2026-04-11）</li>
-          <li>• 時間格式為 HH:MM（如 08:30）</li>
-          <li>• 匯入時不會覆蓋同日已有記錄，會追加合併</li>
-          <li>• 建議先少量測試，確認格式正確後再批量匯入</li>
-        </ul>
+        <p className="text-xs text-blue-700 font-medium mb-2">📤 如何從寶寶成長日記匯出</p>
+        <ol className="text-xs text-blue-600 space-y-1 list-none">
+          <li>1. 開啟寶寶成長日記 App</li>
+          <li>2. 進入「設定」→「報表」→「匯出 CSV」</li>
+          <li>3. 選擇日期範圍後儲存或分享 CSV 檔案</li>
+          <li>4. 回到此頁，選擇對應的記錄類型後上傳</li>
+        </ol>
+        <p className="text-xs text-blue-500 mt-2">※ 匯入時不會覆蓋既有記錄，僅追加合併</p>
       </div>
     </div>
   )
