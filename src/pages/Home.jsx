@@ -6,6 +6,7 @@ import Timeline from '../components/Timeline'
 import QuickFeedingModal from '../components/modals/QuickFeedingModal'
 import QuickSleepModal from '../components/modals/QuickSleepModal'
 import QuickDiaperModal from '../components/modals/QuickDiaperModal'
+import QuickSolidsModal from '../components/modals/QuickSolidsModal'
 import EmptyState from '../components/EmptyState'
 import { formatDate } from '../services/github'
 
@@ -162,6 +163,7 @@ export default function Home() {
               if (type === 'feeding') setActiveModal('feeding')
               else if (type === 'sleep') setActiveModal('sleep')
               else if (type === 'diaper') setActiveModal('diaper')
+              else if (type === 'solids') setActiveModal('solids')
             }}
           />
         )}
@@ -182,6 +184,9 @@ export default function Home() {
           type={activeModal}
           onClose={() => setActiveModal(null)}
         />
+      )}
+      {activeModal === 'solids' && (
+        <QuickSolidsModal onClose={() => setActiveModal(null)} />
       )}
     </div>
   )
