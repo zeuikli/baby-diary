@@ -12,6 +12,7 @@ const Growth = lazy(() => import('./pages/Growth'))
 const Diary = lazy(() => import('./pages/Diary'))
 const Stats = lazy(() => import('./pages/Stats'))
 const Settings = lazy(() => import('./pages/Settings'))
+const Import = lazy(() => import('./pages/Import'))
 
 function LoadingSpinner() {
   return (
@@ -49,6 +50,7 @@ export default function App() {
             <Route path="/diary" element={<Diary />} />
             <Route path="/stats" element={<Stats />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/import" element={<Import />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
