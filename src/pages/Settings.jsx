@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Save, Plus, Trash2, Github, Database, Bell, Info, ChevronRight, Eye, EyeOff, FileUp, Copy, ClipboardPaste, Check } from 'lucide-react'
+import { Save, Plus, Trash2, Github, Database, Bell, Info, ChevronRight, Eye, EyeOff, FileUp, FileDown, Copy, ClipboardPaste, Check } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { generateId } from '../services/github'
@@ -254,23 +254,37 @@ export default function Settings() {
         <p className="text-xs text-gray-400 mt-2">⚠️ 設定碼包含 PAT，請只透過私訊等私密管道分享</p>
       </Section>
 
-      {/* Data Import */}
-      <Section title="資料匯入" icon="📥">
+      {/* Data Import / Export */}
+      <Section title="資料匯入 / 匯出" icon="📦">
         <p className="text-xs text-gray-500 mb-3">
-          將其他寶寶記錄 App 的資料以 CSV 格式匯出後，即可匯入到這裡。支援喝奶、睡眠、尿布、成長記錄。
+          匯入其他 App 的 CSV 記錄，或匯出本 App 所有資料作為備份。匯出格式與匯入相同，可直接還原。
         </p>
-        <button
-          onClick={() => navigate('/import')}
-          className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-pink-50 hover:border-pink-200 transition-colors touch-manipulation"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center">
-              <FileUp size={16} className="text-pink-500" />
+        <div className="space-y-2">
+          <button
+            onClick={() => navigate('/import')}
+            className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-pink-50 hover:border-pink-200 transition-colors touch-manipulation"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center">
+                <FileUp size={16} className="text-pink-500" />
+              </div>
+              <span className="text-sm font-medium text-gray-700">CSV 資料匯入</span>
             </div>
-            <span className="text-sm font-medium text-gray-700">CSV 資料匯入</span>
-          </div>
-          <ChevronRight size={16} className="text-gray-400" />
-        </button>
+            <ChevronRight size={16} className="text-gray-400" />
+          </button>
+          <button
+            onClick={() => navigate('/export')}
+            className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-green-50 hover:border-green-200 transition-colors touch-manipulation"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                <FileDown size={16} className="text-green-500" />
+              </div>
+              <span className="text-sm font-medium text-gray-700">CSV 資料匯出</span>
+            </div>
+            <ChevronRight size={16} className="text-gray-400" />
+          </button>
+        </div>
       </Section>
 
       {/* App info */}
