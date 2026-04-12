@@ -165,7 +165,7 @@ export default function QuickSleepModal({ onClose, activeSleep, editRecord }) {
           </button>
         ) : (
           <button onClick={handleEnd} disabled={saving} className="w-full btn-primary py-3 bg-purple-400 hover:bg-purple-500">
-            {saving ? '儲存中...' : activeSleep ? '停止睡眠' : '儲存記錄'}
+            {saving ? '儲存中...' : activeSleep ? '停止睡眠' : editRecord ? '更新紀錄' : '儲存紀錄'}
           </button>
         )}
       </div>

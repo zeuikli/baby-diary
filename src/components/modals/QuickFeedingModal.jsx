@@ -167,7 +167,7 @@ export default function QuickFeedingModal({ onClose, editRecord }) {
           {saving ? (
             <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" />
           ) : null}
-          {editRecord ? '更新記錄' : '儲存記錄'}
+          {editRecord ? '更新紀錄' : '儲存紀錄'}
         </button>
       </div>
     </Modal>

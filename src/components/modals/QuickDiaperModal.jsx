@@ -154,7 +154,7 @@ export default function QuickDiaperModal({ onClose, type = 'diaper', editRecord 
         </div>
 
         <button onClick={handleSave} disabled={saving} className="w-full btn-primary py-3">
-          {saving ? '儲存中...' : '儲存記錄'}
+          {saving ? '儲存中...' : editRecord ? '更新紀錄' : '儲存紀錄'}
         </button>
       </div>
     </Modal>
