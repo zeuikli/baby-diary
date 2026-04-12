@@ -47,3 +47,5 @@
 | `39d748a` | **feat(home): 摘要卡僅顯示今日有紀錄的類型** — 無紀錄的項目自動隱藏 |
 | `fbd033c` | **feat(stats): 統計報表依實際資料動態顯示項目** — 新增擠奶 / 副食品圖表，無資料的類型自動隱藏 |
 | `1942d0d` | **feat(settings): 日記功能改為可選開關，預設關閉** — 設定頁「功能開關」toggle，控制底部導覽列日記入口 |
+| `6bb0ee0` | **docs: README 精簡為功能說明，commit 歷程獨立為 CHANGELOG.md** — 移除 30+ 行 commit 表格，新建 CHANGELOG.md |
+| `2ae7d46` | **ci: 升級 Node.js 20 → 24** — deploy.yml node-version 改 24 + `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`、package.json 加 `engines >= 24`、新建 `.nvmrc` |
