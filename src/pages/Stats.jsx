@@ -4,7 +4,7 @@ import {
   LineChart, Line, PieChart, Pie, Cell, Legend
 } from 'recharts'
 import { useApp } from '../context/AppContext'
-import { githubService, formatDate } from '../services/github'
+import { githubService, formatDate, createEmptyDay } from '../services/github'
 import { ls } from '../services/localStorage'
 
 function getPast7Days() {
@@ -34,7 +34,7 @@ export default function Stats() {
   const { activeBabyId, isGitHubConfigured } = useApp()
   const [weekData, setWeekData] = useState([])
   const [loading, setLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState('feeding')
+  const [activeTab, setActiveTab] = useState(null)
 
   const loadWeekData = useCallback(async () => {
     if (!activeBabyId) return
@@ -47,10 +47,10 @@ export default function Stats() {
             if (githubService.isConfigured) {
               return await githubService.getDayRecord(activeBabyId, date)
             } else {
-              return ls.get(`day_${activeBabyId}_${date}`) || { date, feeding: [], sleep: [], diaper: [], pumping: [] }
+              return ls.get(`day_${activeBabyId}_${date}`) || createEmptyDay(date, activeBabyId)
             }
           } catch {
-            return { date, feeding: [], sleep: [], diaper: [], pumping: [] }
+            return createEmptyDay(date, activeBabyId)
           }
         })
       )
@@ -72,9 +72,28 @@ export default function Stats() {
     wet: (r.diaper || []).filter(d => d.diaperType === 'wet' || d.diaperType === 'mixed').length,
     dirty: (r.diaper || []).filter(d => d.diaperType === 'dirty' || d.diaperType === 'mixed').length,
     pump: (r.pumping || []).reduce((s, p) => s + (p.amount || 0), 0),
+    pumpCount: (r.pumping || []).length,
+    solids: (r.solids || []).length,
   }))
 
-  // Summary averages
+  // Detect which types have any data in the 7-day window
+  const hasFeeding = chartData.some(d => d.feedCount > 0)
+  const hasSleep = chartData.some(d => d.sleepCount > 0)
+  const hasDiaper = chartData.some(d => d.diaper > 0)
+  const hasPumping = chartData.some(d => d.pumpCount > 0)
+  const hasSolids = chartData.some(d => d.solids > 0)
+
+  // Build tabs dynamically based on available data
+  const tabs = []
+  if (hasFeeding) tabs.push({ id: 'feeding', label: '喝奶', icon: '🍼' })
+  if (hasSleep)   tabs.push({ id: 'sleep',   label: '睡眠', icon: '😴' })
+  if (hasDiaper)  tabs.push({ id: 'diaper',  label: '尿布', icon: '🫧' })
+  if (hasPumping) tabs.push({ id: 'pumping', label: '擠奶', icon: '🤱' })
+  if (hasSolids)  tabs.push({ id: 'solids',  label: '副食品', icon: '🥣' })
+
+  // Auto-select first available tab
+  const currentTab = activeTab && tabs.some(t => t.id === activeTab) ? activeTab : tabs[0]?.id
+
   const avg = (arr, key) => arr.length ? Math.round(arr.reduce((s, d) => s + d[key], 0) / arr.length * 10) / 10 : 0
 
   const today = chartData[chartData.length - 1] || {}
@@ -89,12 +108,6 @@ export default function Stats() {
     return acc
   }, [])
 
-  const tabs = [
-    { id: 'feeding', label: '喝奶', icon: '🍼' },
-    { id: 'sleep', label: '睡眠', icon: '😴' },
-    { id: 'diaper', label: '尿布', icon: '🫧' },
-  ]
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -105,101 +118,153 @@ export default function Stats() {
 
   return (
     <div className="px-4 pt-4 pb-4 space-y-4 animate-fade-in">
-      {/* Today Summary */}
-      <div className="card">
-        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">今日總覽</h2>
-        <div className="grid grid-cols-4 gap-2">
-          <MiniStat icon="🍼" value={`${today.feeding || 0}ml`} label="奶量" />
-          <MiniStat icon="😴" value={`${today.sleep || 0}h`} label="睡眠" />
-          <MiniStat icon="🫧" value={`${today.diaper || 0}次`} label="尿布" />
-          <MiniStat icon="🤱" value={`${today.pump || 0}ml`} label="擠奶" />
+      {/* Today Summary — only items with data */}
+      {(() => {
+        const items = []
+        if (today.feedCount > 0) items.push(<MiniStat key="f" icon="🍼" value={`${today.feeding}ml`} label="奶量" />)
+        if (today.sleepCount > 0 || today.sleep > 0) items.push(<MiniStat key="s" icon="😴" value={`${today.sleep}h`} label="睡眠" />)
+        if (today.diaper > 0) items.push(<MiniStat key="d" icon="🫧" value={`${today.diaper}次`} label="尿布" />)
+        if (today.pumpCount > 0) items.push(<MiniStat key="p" icon="🤱" value={`${today.pump}ml`} label="擠奶" />)
+        if (today.solids > 0) items.push(<MiniStat key="so" icon="🥣" value={`${today.solids}次`} label="副食品" />)
+        if (items.length === 0) return null
+        return (
+          <div className="card">
+            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">今日總覽</h2>
+            <div className={`grid gap-2 ${items.length <= 3 ? 'grid-cols-3' : items.length === 4 ? 'grid-cols-4' : 'grid-cols-5'}`}>{items}</div>
+          </div>
+        )
+      })()}
+
+      {/* 7-day averages — only items with data */}
+      {(() => {
+        const items = []
+        if (hasFeeding) items.push(<AvgCard key="f" label="每日奶量" value={`${avg(chartData, 'feeding')}ml`} icon="🍼" color="text-blue-500" />)
+        if (hasSleep)   items.push(<AvgCard key="s" label="每日睡眠" value={`${avg(chartData, 'sleep')}h`} icon="😴" color="text-purple-500" />)
+        if (hasDiaper)  items.push(<AvgCard key="d" label="每日尿布" value={`${avg(chartData, 'diaper')}次`} icon="🫧" color="text-yellow-600" />)
+        if (hasPumping) items.push(<AvgCard key="p" label="每日擠奶" value={`${avg(chartData, 'pump')}ml`} icon="🤱" color="text-pink-500" />)
+        if (hasSolids)  items.push(<AvgCard key="so" label="每日副食品" value={`${avg(chartData, 'solids')}次`} icon="🥣" color="text-green-600" />)
+        if (items.length === 0) return null
+        return (
+          <div className="card">
+            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">7天平均</h2>
+            <div className={`grid gap-3 ${items.length <= 3 ? 'grid-cols-3' : items.length === 4 ? 'grid-cols-4' : 'grid-cols-5'}`}>{items}</div>
+          </div>
+        )
+      })()}
+
+      {/* Tab charts — only tabs with data */}
+      {tabs.length > 0 && (
+        <div className="card">
+          <div className="flex gap-1 mb-4 bg-gray-100 rounded-xl p-1">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all touch-manipulation ${currentTab === tab.id ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500'}`}
+              >
+                {tab.icon} {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {currentTab === 'feeding' && (
+            <>
+              <p className="text-xs text-gray-400 mb-2">每日奶量 (ml)</p>
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                  <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                  <Tooltip contentStyle={{ borderRadius: '12px', fontSize: 12 }} formatter={(v) => [`${v}ml`, '奶量']} />
+                  <Bar dataKey="feeding" fill="#60a5fa" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+              {feedTypeData.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-xs text-gray-400 mb-2">餵食方式分佈</p>
+                  <ResponsiveContainer width="100%" height={150}>
+                    <PieChart>
+                      <Pie data={feedTypeData} cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" label={({ name, percent }) => `${name} ${Math.round(percent * 100)}%`} labelLine={false}>
+                        {feedTypeData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                      </Pie>
+                      <Tooltip contentStyle={{ borderRadius: '12px', fontSize: 12 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </>
+          )}
+
+          {currentTab === 'sleep' && (
+            <>
+              <p className="text-xs text-gray-400 mb-2">每日睡眠時數 (h)</p>
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                  <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                  <Tooltip contentStyle={{ borderRadius: '12px', fontSize: 12 }} formatter={(v) => [`${v}小時`, '睡眠']} />
+                  <Bar dataKey="sleep" fill="#a78bfa" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </>
+          )}
+
+          {currentTab === 'diaper' && (
+            <>
+              <p className="text-xs text-gray-400 mb-2">每日尿布次數</p>
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                  <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                  <Tooltip contentStyle={{ borderRadius: '12px', fontSize: 12 }} />
+                  <Bar dataKey="wet" stackId="a" fill="#60a5fa" radius={[0, 0, 0, 0]} name="尿尿" />
+                  <Bar dataKey="dirty" stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} name="便便" />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                </BarChart>
+              </ResponsiveContainer>
+            </>
+          )}
+
+          {currentTab === 'pumping' && (
+            <>
+              <p className="text-xs text-gray-400 mb-2">每日擠奶量 (ml)</p>
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                  <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                  <Tooltip contentStyle={{ borderRadius: '12px', fontSize: 12 }} formatter={(v) => [`${v}ml`, '擠奶']} />
+                  <Bar dataKey="pump" fill="#f472b6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </>
+          )}
+
+          {currentTab === 'solids' && (
+            <>
+              <p className="text-xs text-gray-400 mb-2">每日副食品次數</p>
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                  <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} allowDecimals={false} />
+                  <Tooltip contentStyle={{ borderRadius: '12px', fontSize: 12 }} formatter={(v) => [`${v}次`, '副食品']} />
+                  <Bar dataKey="solids" fill="#34d399" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </>
+          )}
         </div>
-      </div>
+      )}
 
-      {/* 7-day averages */}
-      <div className="card">
-        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">7天平均</h2>
-        <div className="grid grid-cols-3 gap-3">
-          <AvgCard label="每日奶量" value={`${avg(chartData, 'feeding')}ml`} icon="🍼" color="text-blue-500" />
-          <AvgCard label="每日睡眠" value={`${avg(chartData, 'sleep')}h`} icon="😴" color="text-purple-500" />
-          <AvgCard label="每日尿布" value={`${avg(chartData, 'diaper')}次`} icon="🫧" color="text-yellow-600" />
+      {tabs.length === 0 && (
+        <div className="card text-center py-8 text-gray-400 text-sm">
+          <p className="text-3xl mb-2">📊</p>
+          <p>過去 7 天沒有任何紀錄</p>
         </div>
-      </div>
-
-      {/* Tab charts */}
-      <div className="card">
-        <div className="flex gap-1 mb-4 bg-gray-100 rounded-xl p-1">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all touch-manipulation ${activeTab === tab.id ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500'}`}
-            >
-              {tab.icon} {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {activeTab === 'feeding' && (
-          <>
-            <p className="text-xs text-gray-400 mb-2">每日奶量 (ml)</p>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} />
-                <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} />
-                <Tooltip contentStyle={{ borderRadius: '12px', fontSize: 12 }} formatter={(v) => [`${v}ml`, '奶量']} />
-                <Bar dataKey="feeding" fill="#60a5fa" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-            {feedTypeData.length > 0 && (
-              <div className="mt-4">
-                <p className="text-xs text-gray-400 mb-2">餵食方式分佈</p>
-                <ResponsiveContainer width="100%" height={150}>
-                  <PieChart>
-                    <Pie data={feedTypeData} cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" label={({ name, percent }) => `${name} ${Math.round(percent * 100)}%`} labelLine={false}>
-                      {feedTypeData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                    </Pie>
-                    <Tooltip contentStyle={{ borderRadius: '12px', fontSize: 12 }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </>
-        )}
-
-        {activeTab === 'sleep' && (
-          <>
-            <p className="text-xs text-gray-400 mb-2">每日睡眠時數 (h)</p>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} />
-                <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} />
-                <Tooltip contentStyle={{ borderRadius: '12px', fontSize: 12 }} formatter={(v) => [`${v}小時`, '睡眠']} />
-                <Bar dataKey="sleep" fill="#a78bfa" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </>
-        )}
-
-        {activeTab === 'diaper' && (
-          <>
-            <p className="text-xs text-gray-400 mb-2">每日尿布次數</p>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} />
-                <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} />
-                <Tooltip contentStyle={{ borderRadius: '12px', fontSize: 12 }} />
-                <Bar dataKey="wet" stackId="a" fill="#60a5fa" radius={[0, 0, 0, 0]} name="尿尿" />
-                <Bar dataKey="dirty" stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} name="便便" />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-              </BarChart>
-            </ResponsiveContainer>
-          </>
-        )}
-      </div>
+      )}
     </div>
   )
 }
