@@ -60,6 +60,9 @@ export default function Home() {
     return s
   }, 0) || 0
   const diaperCount = today?.diaper?.length || 0
+  const pumpingTotal = today?.pumping?.reduce((s, r) => s + (r.amount || 0), 0) || 0
+  const pumpingCount = today?.pumping?.length || 0
+  const solidsCount = today?.solids?.length || 0
   const activeSleep = today?.sleep?.find(s => !s.end)
 
   return (
@@ -105,7 +108,7 @@ export default function Home() {
         <SummaryCard
           icon="🍼"
           value={feedingCount > 0 ? `${feedingTotal}ml` : '—'}
-          label={feedingCount > 0 ? `${feedingCount}次` : '尚無記錄'}
+          label={feedingCount > 0 ? `${feedingCount}次喝奶` : '尚無記錄'}
           color="text-blue-500"
           bg="bg-blue-50"
           onClick={() => navigate('/feeding')}
@@ -125,6 +128,22 @@ export default function Home() {
           color="text-yellow-600"
           bg="bg-yellow-50"
           onClick={() => navigate('/diaper')}
+        />
+        <SummaryCard
+          icon="🤱"
+          value={pumpingCount > 0 ? `${pumpingTotal}ml` : '—'}
+          label={pumpingCount > 0 ? `${pumpingCount}次擠奶` : '尚無記錄'}
+          color="text-pink-500"
+          bg="bg-pink-50"
+          onClick={() => navigate('/diaper')}
+        />
+        <SummaryCard
+          icon="🥣"
+          value={solidsCount > 0 ? `${solidsCount}次` : '—'}
+          label={solidsCount > 0 ? '副食品' : '尚無記錄'}
+          color="text-green-600"
+          bg="bg-green-50"
+          onClick={() => navigate('/solids')}
         />
       </div>
 
@@ -163,6 +182,7 @@ export default function Home() {
               if (type === 'feeding') setActiveModal('feeding')
               else if (type === 'sleep') setActiveModal('sleep')
               else if (type === 'diaper') setActiveModal('diaper')
+              else if (type === 'pumping') setActiveModal('pumping')
               else if (type === 'solids') setActiveModal('solids')
             }}
           />
