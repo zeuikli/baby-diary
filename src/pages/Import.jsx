@@ -141,40 +141,58 @@ const RECORD_TYPES = {
   feeding: {
     label: '喝奶記錄', icon: '🍼',
     sample: [
-      ['date','time','type','amount_ml','duration_min','side','notes'],
-      ['2026-04-11','08:30','breast','','15','left',''],
-      ['2026-04-11','11:00','bottle','120','','',''],
-      ['2026-04-11','14:30','pumped','80','20','both',''],
+      ['日期','時間','類型','奶量(ml)','時長(分鐘)','側邊','備註'],
+      ['2026-04-11','08:30','親餵','','15','左側',''],
+      ['2026-04-11','11:00','瓶餵','120','','',''],
+      ['2026-04-11','14:30','母乳瓶餵','80','20','雙側',''],
     ],
-    hint: 'type: breast(親餵) / bottle(瓶餵) / pumped(母乳瓶餵)　side: left / right / both',
+    hint: '類型：親餵 / 瓶餵 / 母乳瓶餵　側邊：左側 / 右側 / 雙側',
   },
   sleep: {
     label: '睡眠記錄', icon: '😴',
     sample: [
-      ['date','start','end','notes'],
+      ['日期','開始','結束','備註'],
       ['2026-04-11','13:00','14:30','午睡'],
       ['2026-04-11','23:30','04:00','跨午夜填同一天日期'],
     ],
-    hint: '跨午夜：end 小於 start 時系統自動識別',
+    hint: '跨午夜：結束時間小於開始時間時系統自動識別',
   },
   diaper: {
     label: '尿布記錄', icon: '🫧',
     sample: [
-      ['date','time','type','notes'],
-      ['2026-04-11','09:15','wet',''],
-      ['2026-04-11','13:00','dirty',''],
-      ['2026-04-11','17:30','mixed',''],
+      ['日期','時間','類型','顏色','備註'],
+      ['2026-04-11','09:15','尿尿','',''],
+      ['2026-04-11','13:00','便便','黃色',''],
+      ['2026-04-11','17:30','混合','',''],
     ],
-    hint: 'type: wet(尿尿) / dirty(便便) / mixed(混合) / dry(乾淨)',
+    hint: '類型：尿尿 / 便便 / 混合 / 乾淨',
+  },
+  pumping: {
+    label: '擠奶記錄', icon: '🤱',
+    sample: [
+      ['日期','時間','側邊','奶量(ml)','時長(分鐘)','備註'],
+      ['2026-04-11','06:00','雙側','100','15',''],
+      ['2026-04-11','12:00','左側','80','10',''],
+    ],
+    hint: '側邊：左側 / 右側 / 雙側',
+  },
+  solids: {
+    label: '副食品記錄', icon: '🥣',
+    sample: [
+      ['日期','時間','食物','反應','備註'],
+      ['2026-04-11','11:30','米糊','喜歡','第一次嘗試'],
+      ['2026-04-11','17:00','蔬菜泥、水果泥','接受',''],
+    ],
+    hint: '反應：喜歡 / 接受 / 拒絕 / 過敏',
   },
   growth: {
     label: '成長記錄', icon: '📏',
     sample: [
-      ['date','weight_kg','height_cm','head_cm','notes'],
+      ['日期','體重(kg)','身高(cm)','頭圍(cm)','備註'],
       ['2026-04-01','3.3','50.5','34.0','出生'],
       ['2026-05-01','5.2','57.0','38.0','一個月健診'],
     ],
-    hint: 'weight_kg / height_cm / head_cm 至少填一項',
+    hint: '體重 / 身高 / 頭圍至少填一項',
   },
 }
 
@@ -191,23 +209,35 @@ const SIDE_MAP        = { left:'left', 左:'left', 左側:'left', right:'right',
 const DIAPER_TYPE_MAP = { wet:'wet', 尿尿:'wet', urine:'wet', dirty:'dirty', 便便:'dirty', poop:'dirty', bm:'dirty', mixed:'mixed', 混合:'mixed', dry:'dry', 乾淨:'dry', clean:'dry' }
 
 function rowToFeeding(row) {
-  return { id: generateId(), time: getCol(row,'time','時間','start_time'), feedType: FEED_TYPE_MAP[(getCol(row,'type','類型','feed_type')||'').toLowerCase()]||'bottle', amount: toNum(getCol(row,'amount_ml','amount','奶量')), duration: toNum(getCol(row,'duration_min','duration','時長')), side: SIDE_MAP[(getCol(row,'side','側邊')||'').toLowerCase()]||null, notes: getCol(row,'notes','備註') }
+  return { id: generateId(), time: getCol(row,'time','時間','start_time'), feedType: FEED_TYPE_MAP[(getCol(row,'type','類型','feed_type')||'').toLowerCase()]||'bottle', amount: toNum(getCol(row,'amount_ml','amount','奶量','奶量(ml)')), duration: toNum(getCol(row,'duration_min','duration','時長','時長(分鐘)')), side: SIDE_MAP[(getCol(row,'side','側邊')||'').toLowerCase()]||null, notes: getCol(row,'notes','備註') }
 }
 function rowToSleep(row) {
   return { id: generateId(), start: getCol(row,'start','開始','start_time'), end: getCol(row,'end','結束','end_time'), notes: getCol(row,'notes','備註') }
 }
 function rowToDiaper(row) {
-  return { id: generateId(), time: getCol(row,'time','時間'), diaperType: DIAPER_TYPE_MAP[(getCol(row,'type','類型','diaper_type')||'wet').toLowerCase()]||'wet', notes: getCol(row,'notes','備註') }
+  return { id: generateId(), time: getCol(row,'time','時間'), diaperType: DIAPER_TYPE_MAP[(getCol(row,'type','類型','diaper_type')||'wet').toLowerCase()]||'wet', color: getCol(row,'color','顏色')||'', notes: getCol(row,'notes','備註') }
+}
+function rowToPumping(row) {
+  return { id: generateId(), time: getCol(row,'time','時間'), side: SIDE_MAP[(getCol(row,'side','側邊')||'both').toLowerCase()]||'both', amount: toNum(getCol(row,'amount_ml','amount','奶量','奶量(ml)')), duration: toNum(getCol(row,'duration_min','duration','時長','時長(分鐘)')), notes: getCol(row,'notes','備註') }
+}
+function rowToSolids(row) {
+  return { id: generateId(), time: getCol(row,'time','時間'), food: getCol(row,'food','食物'), reaction: getCol(row,'reaction','反應'), notes: getCol(row,'notes','備註') }
 }
 function rowToGrowth(row) {
-  return { id: generateId(), date: getCol(row,'date','日期'), weight: toNum(getCol(row,'weight_kg','weight','體重')), height: toNum(getCol(row,'height_cm','height','身高')), headCirc: toNum(getCol(row,'head_cm','head','頭圍','head_circumference')), notes: getCol(row,'notes','備註') }
+  return { id: generateId(), date: getCol(row,'date','日期'), weight: toNum(getCol(row,'weight_kg','weight','體重','體重(kg)')), height: toNum(getCol(row,'height_cm','height','身高','身高(cm)')), headCirc: toNum(getCol(row,'head_cm','head','頭圍','頭圍(cm)','head_circumference')), notes: getCol(row,'notes','備註') }
 }
-const CONVERTERS = { feeding: rowToFeeding, sleep: rowToSleep, diaper: rowToDiaper, growth: rowToGrowth }
+const CONVERTERS = { feeding: rowToFeeding, sleep: rowToSleep, diaper: rowToDiaper, pumping: rowToPumping, solids: rowToSolids, growth: rowToGrowth }
+
+const FEED_TYPE_ZH = { breast:'親餵', bottle:'瓶餵', pumped:'母乳瓶餵' }
+const SIDE_ZH = { left:'左側', right:'右側', both:'雙側' }
+const DIAPER_TYPE_ZH = { wet:'尿尿', dirty:'便便', mixed:'混合', dry:'乾淨' }
 
 function previewLabel(type, record) {
-  if (type === 'feeding') return `${record.time}  ${record.feedType}${record.amount ? '  '+record.amount+'ml' : ''}${record.duration ? '  '+record.duration+'分' : ''}`
+  if (type === 'feeding') return `${record.time}  ${FEED_TYPE_ZH[record.feedType]||record.feedType}${record.amount ? '  '+record.amount+'ml' : ''}${record.duration ? '  '+record.duration+'分' : ''}`
   if (type === 'sleep')   return `${record.start} → ${record.end || '?'}`
-  if (type === 'diaper')  return `${record.time}  ${record.diaperType}`
+  if (type === 'diaper')  return `${record.time}  ${DIAPER_TYPE_ZH[record.diaperType]||record.diaperType}`
+  if (type === 'pumping') return `${record.time}  ${SIDE_ZH[record.side]||record.side}${record.amount ? '  '+record.amount+'ml' : ''}`
+  if (type === 'solids')  return `${record.time}  ${record.food}${record.reaction ? '  '+record.reaction : ''}`
   if (type === 'growth')  return [record.weight&&record.weight+'kg', record.height&&record.height+'cm', record.headCirc&&'頭'+record.headCirc+'cm'].filter(Boolean).join('  ')
   return ''
 }
@@ -375,9 +405,12 @@ export default function Import() {
         const date = getCol(row, 'date', '日期')
         if (!date.match(/^\d{4}-\d{2}-\d{2}$/)) { errors.push(`第 ${idx+2} 行：日期格式錯誤（${date||'空白'}）`); return }
         const record = convert(row)
-        if (selectedType==='feeding' && !record.time) { errors.push(`第 ${idx+2} 行：缺少 time`); return }
-        if (selectedType==='sleep'   && !record.start) { errors.push(`第 ${idx+2} 行：缺少 start`); return }
-        if (selectedType==='diaper'  && !record.time) { errors.push(`第 ${idx+2} 行：缺少 time`); return }
+        if (selectedType==='feeding' && !record.time) { errors.push(`第 ${idx+2} 行：缺少時間`); return }
+        if (selectedType==='sleep'   && !record.start) { errors.push(`第 ${idx+2} 行：缺少開始時間`); return }
+        if (selectedType==='diaper'  && !record.time) { errors.push(`第 ${idx+2} 行：缺少時間`); return }
+        if (selectedType==='pumping' && !record.time) { errors.push(`第 ${idx+2} 行：缺少時間`); return }
+        if (selectedType==='solids'  && !record.time) { errors.push(`第 ${idx+2} 行：缺少時間`); return }
+        if (selectedType==='solids'  && !record.food) { errors.push(`第 ${idx+2} 行：缺少食物`); return }
         if (selectedType==='growth'  && !record.weight && !record.height && !record.headCirc) { errors.push(`第 ${idx+2} 行：無有效量測值`); return }
         valid.push({ date, record })
       })
@@ -552,7 +585,7 @@ export default function Import() {
           {/* Type selector */}
           <div className="card">
             <h2 className="text-sm font-semibold text-gray-700 mb-3">選擇記錄類型</h2>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {Object.entries(RECORD_TYPES).map(([key, c]) => (
                 <button
                   key={key}
