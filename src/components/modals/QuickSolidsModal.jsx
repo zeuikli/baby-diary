@@ -22,6 +22,7 @@ export default function QuickSolidsModal({ onClose, editRecord }) {
   const [form, setForm] = useState({
     time: editRecord?.time || getCurrentTime(),
     food: editRecord?.food || '',
+    amount: editRecord?.amount || '',
     reaction: editRecord?.reaction || '',
     notes: editRecord?.notes || '',
   })
@@ -44,12 +45,13 @@ export default function QuickSolidsModal({ onClose, editRecord }) {
     }
     setSaving(true)
     try {
+      const record = { ...form, amount: form.amount ? Number(form.amount) : null }
       if (editRecord) {
-        await updateRecord('solids', { ...editRecord, ...form })
+        await updateRecord('solids', { ...editRecord, ...record })
         toast.success('已更新')
       } else {
-        await addRecord('solids', form)
-        toast.success('副食品記錄已新增 🥣')
+        await addRecord('solids', record)
+        toast.success('副食品紀錄已新增 🥣')
       }
       onClose()
     } catch {
@@ -101,6 +103,20 @@ export default function QuickSolidsModal({ onClose, editRecord }) {
               )
             })}
           </div>
+        </div>
+
+        {/* Amount */}
+        <div>
+          <label className="form-label">食量 (ml)</label>
+          <input
+            type="number"
+            placeholder="例如：30"
+            value={form.amount}
+            onChange={e => set('amount', e.target.value)}
+            className="form-input"
+            inputMode="numeric"
+            min="0"
+          />
         </div>
 
         {/* Reaction */}

@@ -26,8 +26,8 @@ const EXPORT_TYPES = [
     cols: ['日期','時間','側邊','奶量(ml)','時長(分鐘)','備註'],
     row: (date, r) => [date, r.time||'', zh(SIDE_ZH, r.side), r.amount??'', r.duration??'', r.notes||''] },
   { id: 'solids',   label: '副食品', icon: '🥣',
-    cols: ['日期','時間','食物','反應','備註'],
-    row: (date, r) => [date, r.time||'', r.food||'', r.reaction||'', r.notes||''] },
+    cols: ['日期','時間','食物','食量(ml)','反應','備註'],
+    row: (date, r) => [date, r.time||'', r.food||'', r.amount??'', r.reaction||'', r.notes||''] },
   { id: 'growth',   label: '成長',   icon: '📏',
     cols: ['日期','體重(kg)','身高(cm)','頭圍(cm)','備註'],
     row: (_, r) => [r.date||'', r.weight??'', r.height??'', r.headCirc??'', r.notes||''] },
@@ -152,7 +152,7 @@ export default function Export() {
 
   // "全部匯出" — merges all types into ONE CSV with a record_type column,
   // avoiding the multiple-download browser blocking issue.
-  const ALL_COLS = ['記錄類型','日期','時間','開始','結束','類型','奶量(ml)','時長(分鐘)','側邊','食物','反應','顏色','體重(kg)','身高(cm)','頭圍(cm)','備註']
+  const ALL_COLS = ['記錄類型','日期','時間','開始','結束','類型','奶量(ml)','時長(分鐘)','側邊','食物','食量(ml)','反應','顏色','體重(kg)','身高(cm)','頭圍(cm)','備註']
 
   const handleExportAll = useCallback(async () => {
     if (!activeBabyId) { toast.error('請先選擇寶寶'); return }
@@ -167,19 +167,19 @@ export default function Export() {
       for (const day of sortedDays) {
         // feeding
         const feedings = Array.isArray(day.feeding) ? day.feeding.filter(Boolean) : []
-        feedings.forEach(r => allRows.push(['喝奶', day.date, r.time||'', '', '', zh(FEED_TYPE_ZH, r.feedType), r.amount??'', r.duration??'', zh(SIDE_ZH, r.side), '', '', '', '', '', '', r.notes||'']))
+        feedings.forEach(r => allRows.push(['喝奶', day.date, r.time||'', '', '', zh(FEED_TYPE_ZH, r.feedType), r.amount??'', r.duration??'', zh(SIDE_ZH, r.side), '', '', '', '', '', '', '', r.notes||'']))
         // sleep
         const sleeps = Array.isArray(day.sleep) ? day.sleep.filter(Boolean) : []
-        sleeps.forEach(r => allRows.push(['睡眠', day.date, '', r.start||'', r.end||'', '', '', '', '', '', '', '', '', '', '', r.notes||'']))
+        sleeps.forEach(r => allRows.push(['睡眠', day.date, '', r.start||'', r.end||'', '', '', '', '', '', '', '', '', '', '', '', r.notes||'']))
         // diaper
         const diapers = Array.isArray(day.diaper) ? day.diaper.filter(Boolean) : []
-        diapers.forEach(r => allRows.push(['尿布', day.date, r.time||'', '', '', zh(DIAPER_TYPE_ZH, r.diaperType), '', '', '', '', '', r.color||'', '', '', '', r.notes||'']))
+        diapers.forEach(r => allRows.push(['尿布', day.date, r.time||'', '', '', zh(DIAPER_TYPE_ZH, r.diaperType), '', '', '', '', '', '', r.color||'', '', '', '', r.notes||'']))
         // pumping
         const pumpings = Array.isArray(day.pumping) ? day.pumping.filter(Boolean) : []
-        pumpings.forEach(r => allRows.push(['擠奶', day.date, r.time||'', '', '', '', r.amount??'', r.duration??'', zh(SIDE_ZH, r.side), '', '', '', '', '', '', r.notes||'']))
+        pumpings.forEach(r => allRows.push(['擠奶', day.date, r.time||'', '', '', '', r.amount??'', r.duration??'', zh(SIDE_ZH, r.side), '', '', '', '', '', '', '', r.notes||'']))
         // solids
         const solids = Array.isArray(day.solids) ? day.solids.filter(Boolean) : []
-        solids.forEach(r => allRows.push(['副食品', day.date, r.time||'', '', '', '', '', '', '', r.food||'', r.reaction||'', '', '', '', '', r.notes||'']))
+        solids.forEach(r => allRows.push(['副食品', day.date, r.time||'', '', '', '', '', '', '', r.food||'', r.amount??'', r.reaction||'', '', '', '', '', r.notes||'']))
       }
 
       // Growth records (stored separately)
@@ -193,7 +193,7 @@ export default function Export() {
       ;(Array.isArray(growthRecs) ? growthRecs : [])
         .filter(Boolean)
         .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
-        .forEach(r => allRows.push(['成長', r.date||'', '', '', '', '', '', '', '', '', '', '', r.weight??'', r.height??'', r.headCirc??'', r.notes||'']))
+        .forEach(r => allRows.push(['成長', r.date||'', '', '', '', '', '', '', '', '', '', '', '', r.weight??'', r.height??'', r.headCirc??'', r.notes||'']))
 
       if (allRows.length === 0) {
         toast.error('沒有任何記錄可以匯出')

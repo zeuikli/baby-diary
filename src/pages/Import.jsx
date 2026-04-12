@@ -177,13 +177,13 @@ const RECORD_TYPES = {
     hint: '側邊：左側 / 右側 / 雙側',
   },
   solids: {
-    label: '副食品記錄', icon: '🥣',
+    label: '副食品紀錄', icon: '🥣',
     sample: [
-      ['日期','時間','食物','反應','備註'],
-      ['2026-04-11','11:30','米糊','喜歡','第一次嘗試'],
-      ['2026-04-11','17:00','蔬菜泥、水果泥','接受',''],
+      ['日期','時間','食物','食量(ml)','反應','備註'],
+      ['2026-04-11','11:30','米糊','30','喜歡','第一次嘗試'],
+      ['2026-04-11','17:00','蔬菜泥、水果泥','50','接受',''],
     ],
-    hint: '反應：喜歡 / 接受 / 拒絕 / 過敏',
+    hint: '食量可選填　反應：喜歡 / 接受 / 拒絕 / 過敏',
   },
   growth: {
     label: '成長記錄', icon: '📏',
@@ -221,7 +221,7 @@ function rowToPumping(row) {
   return { id: generateId(), time: getCol(row,'time','時間'), side: SIDE_MAP[(getCol(row,'side','側邊')||'both').toLowerCase()]||'both', amount: toNum(getCol(row,'amount_ml','amount','奶量','奶量(ml)')), duration: toNum(getCol(row,'duration_min','duration','時長','時長(分鐘)')), notes: getCol(row,'notes','備註') }
 }
 function rowToSolids(row) {
-  return { id: generateId(), time: getCol(row,'time','時間'), food: getCol(row,'food','食物'), reaction: getCol(row,'reaction','反應'), notes: getCol(row,'notes','備註') }
+  return { id: generateId(), time: getCol(row,'time','時間'), food: getCol(row,'food','食物'), amount: toNum(getCol(row,'amount_ml','amount','食量','食量(ml)')), reaction: getCol(row,'reaction','反應'), notes: getCol(row,'notes','備註') }
 }
 function rowToGrowth(row) {
   return { id: generateId(), date: getCol(row,'date','日期'), weight: toNum(getCol(row,'weight_kg','weight','體重','體重(kg)')), height: toNum(getCol(row,'height_cm','height','身高','身高(cm)')), headCirc: toNum(getCol(row,'head_cm','head','頭圍','頭圍(cm)','head_circumference')), notes: getCol(row,'notes','備註') }

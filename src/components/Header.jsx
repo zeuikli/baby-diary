@@ -6,13 +6,17 @@ import BabySelector from './BabySelector'
 
 const PAGE_TITLES = {
   '/': null,
-  '/feeding': '喝奶記錄',
-  '/sleep': '睡眠記錄',
-  '/diaper': '尿布記錄',
+  '/feeding': '喝奶紀錄',
+  '/sleep': '睡眠紀錄',
+  '/diaper': '尿布紀錄',
+  '/pumping': '擠奶紀錄',
+  '/solids': '副食品紀錄',
   '/growth': '成長曲線',
   '/diary': '育兒日記',
   '/stats': '統計報表',
   '/settings': '設定',
+  '/import': '資料匯入',
+  '/export': '資料匯出',
 }
 
 export default function Header() {

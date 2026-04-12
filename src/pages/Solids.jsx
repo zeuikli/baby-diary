@@ -74,7 +74,7 @@ export default function Solids() {
                         </span>
                       )}
                     </div>
-                    {record.food && <p className="text-xs text-gray-600 mt-0.5">{record.food}</p>}
+                    {record.food && <p className="text-xs text-gray-600 mt-0.5">{record.food}{record.amount ? ` · ${record.amount}ml` : ''}</p>}
                     {record.notes && <p className="text-xs text-gray-400 mt-0.5">{record.notes}</p>}
                   </div>
                   <div className="flex gap-1">

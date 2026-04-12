@@ -50,7 +50,7 @@ function getRecordText(type, record) {
         record.side === 'both' ? '雙側' : record.side === 'left' ? '左側' : '右側',
       ].filter(Boolean).join(' · ')
     case 'solids':
-      return [record.food, record.reaction].filter(Boolean).join(' · ')
+      return [record.food, record.amount ? `${record.amount}ml` : null, record.reaction].filter(Boolean).join(' · ')
     default:
       return record.content || ''
   }
