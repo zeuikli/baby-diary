@@ -14,3 +14,8 @@
 
 - 如果 context window 即將用到 70%，請主動通知我開設新的對話接續開發或作業。
 - 嘗試建立 Memory.md，把每次對話摘要下來，幫我壓縮所有不必要的內容以節省成本和時間。
+
+## Git 推送與文件更新
+
+- 每次改動完成後，自動 push 並 merge 到 main branch，確保所有改動都有推送到 GitHub。
+- 按照需求更新 README.md 或 CHANGELOG.md。
