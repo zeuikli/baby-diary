@@ -8,3 +8,14 @@ dist/
 # 個人資料匯入檔案，不納入版控（範本除外）
 imports/*.csv
 imports/BabyDiary*.csv
+
+# Security: prevent accidental commit of sensitive files
+*.pem
+*.key
+*.p12
+*.pfx
+*.cert
+id_rsa
+id_ed25519
+credentials.json
+.env.*

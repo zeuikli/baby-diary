@@ -59,6 +59,7 @@ export const settings = {
 function deepMerge(target, source) {
   const result = { ...target }
   for (const key in source) {
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue
     if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
       result[key] = deepMerge(target[key] || {}, source[key])
     } else {

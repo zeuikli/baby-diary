@@ -20,32 +20,72 @@ export default function Settings() {
   const [shareCode, setShareCode] = useState('')
   const [showShareCode, setShowShareCode] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [sharePin, setSharePin] = useState('')
   const copyTimeoutRef = useRef(null)
 
   useEffect(() => () => {
     if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
   }, [])
 
-  const handleCopyShareCode = () => {
+  const handleCopyShareCode = async () => {
     if (!isGitHubConfigured) { toast.error('請先完成 GitHub 設定'); return }
-    const code = btoa(JSON.stringify({ token: github.token, owner: github.owner, repo: github.repo }))
-    navigator.clipboard.writeText(code).then(() => {
-      toast.success('設定碼已複製，請透過私訊傳給家人')
+    if (sharePin.length < 4) { toast.error('請輸入至少 4 碼的加密密碼'); return }
+    try {
+      const enc = new TextEncoder()
+      const plain = enc.encode(JSON.stringify({ token: github.token, owner: github.owner, repo: github.repo }))
+      const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(sharePin), 'PBKDF2', false, ['deriveKey'])
+      const salt = crypto.getRandomValues(new Uint8Array(16))
+      const iv = crypto.getRandomValues(new Uint8Array(12))
+      const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['encrypt'])
+      const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plain)
+      const packed = new Uint8Array(salt.length + iv.length + new Uint8Array(encrypted).length)
+      packed.set(salt, 0)
+      packed.set(iv, salt.length)
+      packed.set(new Uint8Array(encrypted), salt.length + iv.length)
+      const code = btoa(String.fromCharCode(...packed))
+      await navigator.clipboard.writeText(code)
+      toast.success('設定碼已加密複製，請把密碼和設定碼透過私訊傳給家人')
       setCopied(true)
       if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
       copyTimeoutRef.current = setTimeout(() => setCopied(false), 1800)
-    })
+    } catch (e) {
+      toast.error('加密失敗：' + (e.message || '未知錯誤'))
+    }
     setShowShareCode(false)
   }
 
   const handleImportShareCode = async () => {
     if (!shareCode.trim()) { toast.error('請貼上設定碼'); return }
+    if (sharePin.length < 4) { toast.error('請輸入密碼以解密設定碼'); return }
     try {
-      const config = JSON.parse(atob(shareCode.trim()))
-      if (!config.token || !config.owner || !config.repo) throw new Error()
-      setGithubForm(config)
+      let config
+      try {
+        const packed = Uint8Array.from(atob(shareCode.trim()), c => c.charCodeAt(0))
+        if (packed.length < 29) throw new Error('資料太短')
+        const salt = packed.slice(0, 16)
+        const iv = packed.slice(16, 28)
+        const ciphertext = packed.slice(28)
+        const enc = new TextEncoder()
+        const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(sharePin), 'PBKDF2', false, ['deriveKey'])
+        const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['decrypt'])
+        const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext)
+        config = JSON.parse(new TextDecoder().decode(decrypted))
+      } catch {
+        toast.error('解密失敗，請確認密碼和設定碼是否正確')
+        return
+      }
+      const { token, owner, repo } = config
+      if (typeof token !== 'string' || typeof owner !== 'string' || typeof repo !== 'string' || !token || !owner || !repo) {
+        toast.error('設定碼欄位無效'); return
+      }
+      if (!/^[a-zA-Z0-9._-]+$/.test(owner) || !/^[a-zA-Z0-9._-]+$/.test(repo)) {
+        toast.error('owner 或 repo 名稱包含不允許的字元'); return
+      }
+      if (!confirm(`確認要連線到 ${owner}/${repo} 嗎？\n設定碼將會把資料同步到此 Repo。`)) return
+      const safeConfig = { token, owner, repo }
+      setGithubForm(safeConfig)
       setSaving(true)
-      await updateGitHub(config)
+      await updateGitHub(safeConfig)
       setSaving(false)
       setShareCode('')
       setShowShareCode(false)
@@ -251,7 +291,20 @@ export default function Settings() {
             </button>
           </div>
         )}
-        <p className="text-xs text-gray-400 mt-2">⚠️ 設定碼包含 PAT，請只透過私訊等私密管道分享</p>
+        <div className="mt-3">
+          <label className="form-label">加密密碼</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="請輸入至少 4 碼的密碼"
+            value={sharePin}
+            onChange={e => setSharePin(e.target.value)}
+            className="form-input text-center tracking-widest font-mono"
+            maxLength={20}
+          />
+          <p className="text-xs text-gray-400 mt-1">複製和貼上設定碼時都需要輸入相同的密碼</p>
+        </div>
+        <p className="text-xs text-gray-400 mt-2">⚠️ 設定碼已加密保護，請將密碼和設定碼分別透過不同管道傳給家人</p>
       </Section>
 
       {/* Feature toggles */}
