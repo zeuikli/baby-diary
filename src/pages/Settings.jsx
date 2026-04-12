@@ -10,7 +10,7 @@ const AVATARS = ['👶', '🧒', '👦', '👧', '🐣', '🌸', '⭐', '🌈']
 
 export default function Settings() {
   const navigate = useNavigate()
-  const { github, isGitHubConfigured, autoConfigured, babies, activeBabyId, updateGitHub, saveBaby, deleteBaby, setActiveBaby } = useApp()
+  const { github, isGitHubConfigured, autoConfigured, babies, activeBabyId, updateGitHub, saveBaby, deleteBaby, setActiveBaby, enableDiary, setEnableDiary } = useApp()
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
   const [githubForm, setGithubForm] = useState({ ...github })
   const [showToken, setShowToken] = useState(false)
@@ -252,6 +252,22 @@ export default function Settings() {
           </div>
         )}
         <p className="text-xs text-gray-400 mt-2">⚠️ 設定碼包含 PAT，請只透過私訊等私密管道分享</p>
+      </Section>
+
+      {/* Feature toggles */}
+      <Section title="功能開關" icon="🔧">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-700">育兒日記</p>
+            <p className="text-xs text-gray-400">開啟後底部導覽列會出現「日記」頁面</p>
+          </div>
+          <button
+            onClick={() => setEnableDiary(!enableDiary)}
+            className={`relative w-11 h-6 rounded-full transition-colors ${enableDiary ? 'bg-pink-400' : 'bg-gray-300'}`}
+          >
+            <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${enableDiary ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
       </Section>
 
       {/* Data Import / Export */}

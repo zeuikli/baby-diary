@@ -1,17 +1,19 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
 import { Home, BarChart2, BookOpen, Settings, TrendingUp } from 'lucide-react'
-import { Baby } from './icons/Baby'
-
-const navItems = [
-  { path: '/', icon: Home, label: '首頁' },
-  { path: '/stats', icon: BarChart2, label: '統計' },
-  { path: '/growth', icon: TrendingUp, label: '成長' },
-  { path: '/diary', icon: BookOpen, label: '日記' },
-  { path: '/settings', icon: Settings, label: '設定' },
-]
+import { useApp } from '../context/AppContext'
 
 export default function Navigation() {
+  const { enableDiary } = useApp()
+
+  const navItems = [
+    { path: '/', icon: Home, label: '首頁' },
+    { path: '/stats', icon: BarChart2, label: '統計' },
+    { path: '/growth', icon: TrendingUp, label: '成長' },
+    ...(enableDiary ? [{ path: '/diary', icon: BookOpen, label: '日記' }] : []),
+    { path: '/settings', icon: Settings, label: '設定' },
+  ]
+
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-40 bg-white/90 backdrop-blur-sm border-t border-pink-100 safe-bottom">
       <div className="flex items-center justify-around px-2 py-1">

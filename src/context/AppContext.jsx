@@ -11,6 +11,9 @@ const initialState = {
   isGitHubConfigured: false,
   autoConfigured: false, // true = injected from build-time secret
 
+  // Feature toggles
+  enableDiary: false,
+
   // Babies
   babies: [],
   activeBabyId: null,
@@ -41,6 +44,8 @@ function reducer(state, action) {
       return { ...state, today: action.payload }
     case 'SET_SELECTED_DATE':
       return { ...state, selectedDate: action.payload }
+    case 'SET_ENABLE_DIARY':
+      return { ...state, enableDiary: action.payload }
     case 'SET_LOADING':
       return { ...state, loading: action.payload }
     case 'SET_SYNCING':
@@ -122,6 +127,7 @@ export function AppProvider({ children }) {
       payload: {
         github,
         isGitHubConfigured: !!(github.token && github.owner && github.repo),
+        enableDiary: saved.enableDiary || false,
         babies,
         activeBabyId,
         autoConfigured: false,
@@ -317,6 +323,11 @@ export function AppProvider({ children }) {
     dispatch({ type: 'SET_SELECTED_DATE', payload: date })
   }, [])
 
+  const setEnableDiary = useCallback((enabled) => {
+    dispatch({ type: 'SET_ENABLE_DIARY', payload: enabled })
+    settingsStore.update({ enableDiary: enabled })
+  }, [])
+
   const value = {
     ...state,
     activeBaby: state.babies.find(b => b.id === state.activeBabyId) || null,
@@ -328,6 +339,7 @@ export function AppProvider({ children }) {
     deleteBaby,
     updateGitHub,
     setSelectedDate,
+    setEnableDiary,
     loadDayRecord,
   }
 
