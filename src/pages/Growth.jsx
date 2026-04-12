@@ -196,7 +196,7 @@ export default function Growth() {
             />
           </div>
           <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">
-            百分位依 WHO 0-5 歲國際生長標準推算（對照寶寶性別與月齡）
+            百分位依 WHO 0-2 歲國際生長標準推算（對照寶寶性別與月齡）
           </p>
         </div>
       )}
