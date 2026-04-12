@@ -53,3 +53,5 @@
 | `dfa5da9` | **security(P0): serialize-javascript 6.0.2 → 7.0.5** — 精準 scope override 消除 HIGH 漏洞 (RCE + DoS)，剩餘僅 3 moderate dev-only |
 | `6962582` | **docs: 新增 CLAUDE.md** — 定義語言規則、Sub Agent 策略、Context Window 管理、Git 推送與文件更新規則 |
 | `7d18f0f` | **fix(settings): 修正加密功能在非安全上下文 (HTTP) 失敗** — 加入 `window.isSecureContext` + `crypto.subtle` 可用性檢查，Clipboard API 失敗時改顯示文字框供手動複製，解密流程同步加入安全偵測 |
+| `c565896` | **docs: 更新 CLAUDE.md 整合 claude-code-workspace 最佳實踐** — 加入 IMPORTANT/YOU MUST 標記、Compaction 指引、Git 重試機制、驗證與品質區塊、文件參照 |
+| *(pending)* | **feat(diaper): 尿布記錄新增形狀、多寡欄位，顏色選項擴充至 7 色** — 形狀（顆粒/硬/正常/鬆軟/黏稠/稀）、多寡（少量/中等/量多）、顏色（黃色/綠色/黃褐色/紅色/棕色/黑色/灰白），同步更新匯出匯入與 CSV 模板 |

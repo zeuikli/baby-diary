@@ -15,7 +15,9 @@ const diaperTypes = [
   { value: 'dry', label: '乾淨', icon: '✨' },
 ]
 
-const colorOptions = ['黃色', '棕色', '綠色', '黑色']
+const colorOptions = ['黃色', '綠色', '黃褐色', '紅色', '棕色', '黑色', '灰白']
+const consistencyOptions = ['顆粒', '硬', '正常', '鬆軟', '黏稠', '稀']
+const amountOptions = ['少量', '中等', '量多']
 const pumpSides = [
   { value: 'left', label: '左側' },
   { value: 'right', label: '右側' },
@@ -36,6 +38,8 @@ export default function QuickDiaperModal({ onClose, type = 'diaper', editRecord 
     time: editRecord?.time || getCurrentTime(),
     diaperType: editRecord?.diaperType || 'wet',
     color: editRecord?.color || '',
+    consistency: editRecord?.consistency || '',
+    amount: editRecord?.amount || '',
     notes: editRecord?.notes || '',
   })
   const [saving, setSaving] = useState(false)
@@ -125,24 +129,58 @@ export default function QuickDiaperModal({ onClose, type = 'diaper', editRecord 
                 ))}
               </div>
             </div>
-            {/* Color */}
+            {/* Color, Consistency, Amount — only for dirty/mixed */}
             {form.diaperType !== 'wet' && form.diaperType !== 'dry' && (
-              <div>
-                <label className="form-label">顏色</label>
-                <div className="flex gap-2 flex-wrap">
-                  {colorOptions.map(c => (
-                    <button
-                      key={c}
-                      onClick={() => set('color', form.color === c ? '' : c)}
-                      className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all touch-manipulation ${
-                        form.color === c ? 'bg-amber-50 border-amber-300 text-amber-700' : 'bg-gray-50 border-gray-200 text-gray-500'
-                      }`}
-                    >
-                      {c}
-                    </button>
-                  ))}
+              <>
+                <div>
+                  <label className="form-label">顏色</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {colorOptions.map(c => (
+                      <button
+                        key={c}
+                        onClick={() => set('color', form.color === c ? '' : c)}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all touch-manipulation ${
+                          form.color === c ? 'bg-amber-50 border-amber-300 text-amber-700' : 'bg-gray-50 border-gray-200 text-gray-500'
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+                <div>
+                  <label className="form-label">形狀</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {consistencyOptions.map(c => (
+                      <button
+                        key={c}
+                        onClick={() => set('consistency', form.consistency === c ? '' : c)}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all touch-manipulation ${
+                          form.consistency === c ? 'bg-orange-50 border-orange-300 text-orange-700' : 'bg-gray-50 border-gray-200 text-gray-500'
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="form-label">多寡</label>
+                  <div className="flex gap-2">
+                    {amountOptions.map(a => (
+                      <button
+                        key={a}
+                        onClick={() => set('amount', form.amount === a ? '' : a)}
+                        className={`flex-1 py-2 rounded-xl border text-xs font-medium transition-all touch-manipulation ${
+                          form.amount === a ? 'bg-teal-50 border-teal-300 text-teal-700' : 'bg-gray-50 border-gray-200 text-gray-500'
+                        }`}
+                      >
+                        {a}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
             )}
           </>
         )}

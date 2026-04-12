@@ -90,3 +90,29 @@ claude-code-workspace/
 
 ### 目前分支狀態
 - `claude/check-repo-access-BOiWw`：本次工作分支
+
+---
+
+## Session: 2026-04-12 (3)
+
+### 完成事項
+
+#### 1. 尿布記錄功能擴充
+- **顏色選項**：從 4 色（黃色/棕色/綠色/黑色）擴充為 7 色（黃色/綠色/黃褐色/��色/棕色/黑色/灰白）
+- **新增「形狀」欄位**：顆粒/硬/正常/鬆軟/黏稠/稀（僅便便/混合時顯示）
+- **新增「多寡」���位**：少量/中等/量多（僅便便/混合時顯���）
+- 列表頁同步顯示新欄位 tag（顏色=amber、形狀=orange、多寡=teal）
+- CSV 匯出/匯入/模板全部同步更新
+
+### 修改檔案
+| 檔案 | 說明 |
+|------|------|
+| `src/components/modals/QuickDiaperModal.jsx` | 新增 consistency/amount 欄位、更新 colorOptions 為 7 色 |
+| `src/pages/Diaper.jsx` | 列表顯示 consistency/amount tag |
+| `src/pages/Export.jsx` | diaper 匯出增加形狀/多寡欄位，全部匯出同步更新 |
+| `src/pages/Import.jsx` | rowToDiaper 讀取 consistency/amount、sample 更新、previewLabel 更新 |
+| `imports/templates/diaper-template.csv` | 新增 consistency/amount 欄位 |
+| `CHANGELOG.md` | 新增本次變更紀錄 |
+
+### 目前分支狀態
+- `claude/check-repo-access-BOiWw`：已 merge 至 main 並推送

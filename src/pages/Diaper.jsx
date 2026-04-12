@@ -74,10 +74,12 @@ export default function Diaper() {
                     <span className="text-xl">{cfg.icon}</span>
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-medium text-gray-800">{record.time}</span>
                       <span className={`tag ${cfg.bg} ${cfg.text}`}>{cfg.label}</span>
-                      {record.color && <span className="tag bg-gray-100 text-gray-600">{record.color}</span>}
+                      {record.color && <span className="tag bg-amber-50 text-amber-700">{record.color}</span>}
+                      {record.consistency && <span className="tag bg-orange-50 text-orange-700">{record.consistency}</span>}
+                      {record.amount && <span className="tag bg-teal-50 text-teal-700">{record.amount}</span>}
                     </div>
                     {record.notes && <p className="text-xs text-gray-400 mt-0.5">{record.notes}</p>}
                   </div>
