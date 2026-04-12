@@ -49,3 +49,4 @@
 | `1942d0d` | **feat(settings): 日記功能改為可選開關，預設關閉** — 設定頁「功能開關」toggle，控制底部導覽列日記入口 |
 | `6bb0ee0` | **docs: README 精簡為功能說明，commit 歷程獨立為 CHANGELOG.md** — 移除 30+ 行 commit 表格，新建 CHANGELOG.md |
 | `2ae7d46` | **ci: 升級 Node.js 20 → 24** — deploy.yml node-version 改 24 + `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`、package.json 加 `engines >= 24`、新建 `.nvmrc` |
+| `d6cff67` | **security: 綜合安全加固 (P0-P2)** — 移除 SW API 快取、加入 CSP、分享設定碼改用 AES-GCM 加密 + 匯入驗證、deepMerge 防護、.gitignore 補強、Actions 釘定 SHA。詳見 [SECURITY_AUDIT.md](./SECURITY_AUDIT.md) |
