@@ -14,8 +14,8 @@ const EXPORT_TYPES = [
     cols: ['date','start','end','notes'],
     row: (date, r) => [date, r.start||'', r.end||'', r.notes||''] },
   { id: 'diaper',   label: '尿布',   icon: '🫧',
-    cols: ['date','time','type','notes'],
-    row: (date, r) => [date, r.time||'', r.diaperType||'', r.notes||''] },
+    cols: ['date','time','type','color','notes'],
+    row: (date, r) => [date, r.time||'', r.diaperType||'', r.color||'', r.notes||''] },
   { id: 'pumping',  label: '擠奶',   icon: '🤱',
     cols: ['date','time','side','amount_ml','duration_min','notes'],
     row: (date, r) => [date, r.time||'', r.side||'', r.amount??'', r.duration??'', r.notes||''] },
@@ -109,7 +109,8 @@ export default function Export() {
         } else {
           records = ls.get(`growth_${activeBabyId}`) || []
         }
-        dataRows = records
+        dataRows = (Array.isArray(records) ? records : [])
+          .filter(Boolean)
           .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
           .map(r => typeConfig.row('', r))
       } else {
@@ -118,7 +119,8 @@ export default function Export() {
         days
           .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
           .forEach(day => {
-            const recs = day[typeConfig.id] || []
+            const arr = day[typeConfig.id]
+            const recs = Array.isArray(arr) ? arr.filter(Boolean) : []
             recs.forEach(r => {
               dataRows.push(typeConfig.row(day.date, r))
             })
@@ -134,8 +136,8 @@ export default function Export() {
       downloadCSV(filename, typeConfig.cols, dataRows)
       toast.success(`已匯出 ${dataRows.length} 筆${typeConfig.label}記錄`)
     } catch (e) {
-      console.error(e)
-      toast.error('匯出失敗，請稍後重試')
+      console.error('Export error:', e)
+      toast.error(`匯出${typeConfig.label}失敗：${e.message || '未知錯誤'}`)
     } finally {
       setLoading(false)
       setProgress('')
@@ -162,14 +164,16 @@ export default function Export() {
           } else {
             records = ls.get(`growth_${activeBabyId}`) || []
           }
-          dataRows = records
+          dataRows = (Array.isArray(records) ? records : [])
+            .filter(Boolean)
             .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
             .map(r => typeConfig.row('', r))
         } else {
           days
             .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
             .forEach(day => {
-              const recs = day[typeConfig.id] || []
+              const arr = day[typeConfig.id]
+              const recs = Array.isArray(arr) ? arr.filter(Boolean) : []
               recs.forEach(r => dataRows.push(typeConfig.row(day.date, r)))
             })
         }
