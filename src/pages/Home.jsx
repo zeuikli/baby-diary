@@ -23,6 +23,7 @@ export default function Home() {
   const { today, loading, activeBaby, babies, selectedDate } = useApp()
   const navigate = useNavigate()
   const [activeModal, setActiveModal] = useState(null)
+  const [editRecord, setEditRecord] = useState(null)
   const isToday = selectedDate === formatDate()
 
   if (babies.length === 0) {
@@ -41,6 +42,7 @@ export default function Home() {
   const babyAge = getBabyAge(activeBaby?.birthdate)
 
   const handleQuickAction = (id) => {
+    setEditRecord(null)
     if (id === 'feeding') setActiveModal('feeding')
     else if (id === 'sleep') setActiveModal('sleep')
     else if (id === 'diaper') setActiveModal('diaper')
@@ -135,7 +137,7 @@ export default function Home() {
           label={pumpingCount > 0 ? `${pumpingCount}次擠奶` : '尚無記錄'}
           color="text-pink-500"
           bg="bg-pink-50"
-          onClick={() => navigate('/diaper')}
+          onClick={() => navigate('/pumping')}
         />
         <SummaryCard
           icon="🥣"
@@ -179,6 +181,7 @@ export default function Home() {
           <Timeline
             today={today}
             onEditRecord={(type, record) => {
+              setEditRecord(record)
               if (type === 'feeding') setActiveModal('feeding')
               else if (type === 'sleep') setActiveModal('sleep')
               else if (type === 'diaper') setActiveModal('diaper')
@@ -191,22 +194,24 @@ export default function Home() {
 
       {/* Modals */}
       {activeModal === 'feeding' && (
-        <QuickFeedingModal onClose={() => setActiveModal(null)} />
+        <QuickFeedingModal editRecord={editRecord} onClose={() => { setActiveModal(null); setEditRecord(null) }} />
       )}
       {activeModal === 'sleep' && (
         <QuickSleepModal
           activeSleep={activeSleep}
-          onClose={() => setActiveModal(null)}
+          editRecord={editRecord}
+          onClose={() => { setActiveModal(null); setEditRecord(null) }}
         />
       )}
       {(activeModal === 'diaper' || activeModal === 'pumping') && (
         <QuickDiaperModal
           type={activeModal}
-          onClose={() => setActiveModal(null)}
+          editRecord={editRecord}
+          onClose={() => { setActiveModal(null); setEditRecord(null) }}
         />
       )}
       {activeModal === 'solids' && (
-        <QuickSolidsModal onClose={() => setActiveModal(null)} />
+        <QuickSolidsModal editRecord={editRecord} onClose={() => { setActiveModal(null); setEditRecord(null) }} />
       )}
     </div>
   )

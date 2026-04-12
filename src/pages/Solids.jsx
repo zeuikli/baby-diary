@@ -48,7 +48,7 @@ export default function Solids() {
       {/* Records */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">副食品記錄</h2>
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">副食品紀錄</h2>
           <button onClick={() => { setEditRecord(null); setShowModal(true) }} className="flex items-center gap-1 text-xs text-pink-500 font-medium px-2 py-1 bg-pink-50 rounded-lg touch-manipulation">
             <Plus size={14} /> 新增
           </button>

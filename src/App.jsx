@@ -8,6 +8,7 @@ const Home = lazy(() => import('./pages/Home'))
 const Feeding = lazy(() => import('./pages/Feeding'))
 const Sleep = lazy(() => import('./pages/Sleep'))
 const Diaper = lazy(() => import('./pages/Diaper'))
+const Pumping = lazy(() => import('./pages/Pumping'))
 const Solids = lazy(() => import('./pages/Solids'))
 const Growth = lazy(() => import('./pages/Growth'))
 const Diary = lazy(() => import('./pages/Diary'))
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="/feeding" element={<Feeding />} />
             <Route path="/sleep" element={<Sleep />} />
             <Route path="/diaper" element={<Diaper />} />
+            <Route path="/pumping" element={<Pumping />} />
             <Route path="/solids" element={<Solids />} />
             <Route path="/growth" element={<Growth />} />
             <Route path="/diary" element={<Diary />} />
