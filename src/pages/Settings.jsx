@@ -27,9 +27,17 @@ export default function Settings() {
     if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
   }, [])
 
+  const [generatedCode, setGeneratedCode] = useState('')
+
   const handleCopyShareCode = async () => {
     if (!isGitHubConfigured) { toast.error('請先完成 GitHub 設定'); return }
     if (sharePin.length < 4) { toast.error('請輸入至少 4 碼的加密密碼'); return }
+
+    if (!window.isSecureContext || !crypto.subtle) {
+      toast.error('加密功能需要 HTTPS 安全連線，請確認網址為 https:// 或 localhost')
+      return
+    }
+
     try {
       const enc = new TextEncoder()
       const plain = enc.encode(JSON.stringify({ token: github.token, owner: github.owner, repo: github.repo }))
@@ -43,20 +51,30 @@ export default function Settings() {
       packed.set(iv, salt.length)
       packed.set(new Uint8Array(encrypted), salt.length + iv.length)
       const code = btoa(String.fromCharCode(...packed))
-      await navigator.clipboard.writeText(code)
-      toast.success('設定碼已加密複製，請把密碼和設定碼透過私訊傳給家人')
-      setCopied(true)
-      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
-      copyTimeoutRef.current = setTimeout(() => setCopied(false), 1800)
+
+      // 嘗試使用 Clipboard API，失敗則顯示設定碼供手動複製
+      try {
+        await navigator.clipboard.writeText(code)
+        toast.success('設定碼已加密複製，請把密碼和設定碼透過私訊傳給家人')
+        setCopied(true)
+        if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
+        copyTimeoutRef.current = setTimeout(() => setCopied(false), 1800)
+      } catch {
+        setGeneratedCode(code)
+        toast.success('加密成功！請手動複製下方的設定碼')
+      }
     } catch (e) {
       toast.error('加密失敗：' + (e.message || '未知錯誤'))
     }
-    setShowShareCode(false)
   }
 
   const handleImportShareCode = async () => {
     if (!shareCode.trim()) { toast.error('請貼上設定碼'); return }
     if (sharePin.length < 4) { toast.error('請輸入密碼以解密設定碼'); return }
+    if (!window.isSecureContext || !crypto.subtle) {
+      toast.error('解密功能需要 HTTPS 安全連線，請確認網址為 https:// 或 localhost')
+      return
+    }
     try {
       let config
       try {
@@ -272,6 +290,24 @@ export default function Settings() {
             <ClipboardPaste size={15} /> 貼上設定碼
           </button>
         </div>
+        {generatedCode && (
+          <div className="mt-3 space-y-2">
+            <label className="form-label">加密設定碼（請手動全選複製）</label>
+            <textarea
+              rows={3}
+              readOnly
+              value={generatedCode}
+              onFocus={e => e.target.select()}
+              className="form-input resize-none text-xs font-mono bg-gray-50"
+            />
+            <button
+              onClick={() => setGeneratedCode('')}
+              className="w-full py-2 rounded-xl border border-gray-200 text-sm text-gray-500 hover:bg-gray-50 transition-colors touch-manipulation"
+            >
+              關閉
+            </button>
+          </div>
+        )}
         {showShareCode && (
           <div className="mt-3 space-y-2">
             <textarea
