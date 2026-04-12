@@ -5,25 +5,31 @@ import { githubService } from '../services/github'
 import { ls } from '../services/localStorage'
 import toast from 'react-hot-toast'
 
-// CSV column definitions per record type — matches Import.jsx format for round-trip
+// Translate internal enum values to Traditional Chinese for CSV readability
+const FEED_TYPE_ZH = { breast: '親餵', bottle: '瓶餵', pumped: '母乳瓶餵' }
+const DIAPER_TYPE_ZH = { wet: '尿尿', dirty: '便便', mixed: '混合', dry: '乾淨' }
+const SIDE_ZH = { left: '左側', right: '右側', both: '雙側' }
+const zh = (map, val) => map[val] || val || ''
+
+// CSV column definitions per record type — headers in Traditional Chinese
 const EXPORT_TYPES = [
   { id: 'feeding',  label: '喝奶',   icon: '🍼',
-    cols: ['date','time','type','amount_ml','duration_min','side','notes'],
-    row: (date, r) => [date, r.time||'', r.feedType||'', r.amount??'', r.duration??'', r.side||'', r.notes||''] },
+    cols: ['日期','時間','類型','奶量(ml)','時長(分鐘)','側邊','備註'],
+    row: (date, r) => [date, r.time||'', zh(FEED_TYPE_ZH, r.feedType), r.amount??'', r.duration??'', zh(SIDE_ZH, r.side), r.notes||''] },
   { id: 'sleep',    label: '睡眠',   icon: '😴',
-    cols: ['date','start','end','notes'],
+    cols: ['日期','開始','結束','備註'],
     row: (date, r) => [date, r.start||'', r.end||'', r.notes||''] },
   { id: 'diaper',   label: '尿布',   icon: '🫧',
-    cols: ['date','time','type','color','notes'],
-    row: (date, r) => [date, r.time||'', r.diaperType||'', r.color||'', r.notes||''] },
+    cols: ['日期','時間','類型','顏色','備註'],
+    row: (date, r) => [date, r.time||'', zh(DIAPER_TYPE_ZH, r.diaperType), r.color||'', r.notes||''] },
   { id: 'pumping',  label: '擠奶',   icon: '🤱',
-    cols: ['date','time','side','amount_ml','duration_min','notes'],
-    row: (date, r) => [date, r.time||'', r.side||'', r.amount??'', r.duration??'', r.notes||''] },
+    cols: ['日期','時間','側邊','奶量(ml)','時長(分鐘)','備註'],
+    row: (date, r) => [date, r.time||'', zh(SIDE_ZH, r.side), r.amount??'', r.duration??'', r.notes||''] },
   { id: 'solids',   label: '副食品', icon: '🥣',
-    cols: ['date','time','food','reaction','notes'],
+    cols: ['日期','時間','食物','反應','備註'],
     row: (date, r) => [date, r.time||'', r.food||'', r.reaction||'', r.notes||''] },
   { id: 'growth',   label: '成長',   icon: '📏',
-    cols: ['date','weight_kg','height_cm','head_cm','notes'],
+    cols: ['日期','體重(kg)','身高(cm)','頭圍(cm)','備註'],
     row: (_, r) => [r.date||'', r.weight??'', r.height??'', r.headCirc??'', r.notes||''] },
 ]
 
@@ -146,7 +152,7 @@ export default function Export() {
 
   // "全部匯出" — merges all types into ONE CSV with a record_type column,
   // avoiding the multiple-download browser blocking issue.
-  const ALL_COLS = ['record_type','date','time','start','end','type','amount_ml','duration_min','side','food','reaction','color','weight_kg','height_cm','head_cm','notes']
+  const ALL_COLS = ['記錄類型','日期','時間','開始','結束','類型','奶量(ml)','時長(分鐘)','側邊','食物','反應','顏色','體重(kg)','身高(cm)','頭圍(cm)','備註']
 
   const handleExportAll = useCallback(async () => {
     if (!activeBabyId) { toast.error('請先選擇寶寶'); return }
@@ -161,19 +167,19 @@ export default function Export() {
       for (const day of sortedDays) {
         // feeding
         const feedings = Array.isArray(day.feeding) ? day.feeding.filter(Boolean) : []
-        feedings.forEach(r => allRows.push(['feeding', day.date, r.time||'', '', '', r.feedType||'', r.amount??'', r.duration??'', r.side||'', '', '', '', '', '', '', r.notes||'']))
+        feedings.forEach(r => allRows.push(['喝奶', day.date, r.time||'', '', '', zh(FEED_TYPE_ZH, r.feedType), r.amount??'', r.duration??'', zh(SIDE_ZH, r.side), '', '', '', '', '', '', r.notes||'']))
         // sleep
         const sleeps = Array.isArray(day.sleep) ? day.sleep.filter(Boolean) : []
-        sleeps.forEach(r => allRows.push(['sleep', day.date, '', r.start||'', r.end||'', '', '', '', '', '', '', '', '', '', '', r.notes||'']))
+        sleeps.forEach(r => allRows.push(['睡眠', day.date, '', r.start||'', r.end||'', '', '', '', '', '', '', '', '', '', '', r.notes||'']))
         // diaper
         const diapers = Array.isArray(day.diaper) ? day.diaper.filter(Boolean) : []
-        diapers.forEach(r => allRows.push(['diaper', day.date, r.time||'', '', '', r.diaperType||'', '', '', '', '', '', r.color||'', '', '', '', r.notes||'']))
+        diapers.forEach(r => allRows.push(['尿布', day.date, r.time||'', '', '', zh(DIAPER_TYPE_ZH, r.diaperType), '', '', '', '', '', r.color||'', '', '', '', r.notes||'']))
         // pumping
         const pumpings = Array.isArray(day.pumping) ? day.pumping.filter(Boolean) : []
-        pumpings.forEach(r => allRows.push(['pumping', day.date, r.time||'', '', '', '', r.amount??'', r.duration??'', r.side||'', '', '', '', '', '', '', r.notes||'']))
+        pumpings.forEach(r => allRows.push(['擠奶', day.date, r.time||'', '', '', '', r.amount??'', r.duration??'', zh(SIDE_ZH, r.side), '', '', '', '', '', '', r.notes||'']))
         // solids
         const solids = Array.isArray(day.solids) ? day.solids.filter(Boolean) : []
-        solids.forEach(r => allRows.push(['solids', day.date, r.time||'', '', '', '', '', '', '', r.food||'', r.reaction||'', '', '', '', '', r.notes||'']))
+        solids.forEach(r => allRows.push(['副食品', day.date, r.time||'', '', '', '', '', '', '', r.food||'', r.reaction||'', '', '', '', '', r.notes||'']))
       }
 
       // Growth records (stored separately)
@@ -187,7 +193,7 @@ export default function Export() {
       ;(Array.isArray(growthRecs) ? growthRecs : [])
         .filter(Boolean)
         .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
-        .forEach(r => allRows.push(['growth', r.date||'', '', '', '', '', '', '', '', '', '', '', r.weight??'', r.height??'', r.headCirc??'', r.notes||'']))
+        .forEach(r => allRows.push(['成長', r.date||'', '', '', '', '', '', '', '', '', '', '', r.weight??'', r.height??'', r.headCirc??'', r.notes||'']))
 
       if (allRows.length === 0) {
         toast.error('沒有任何記錄可以匯出')
