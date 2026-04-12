@@ -45,4 +45,48 @@
 - `claude/add-claude-config-WWn2E`：功能分支，已合併至 main
 
 ### 待注意
-- `claude-code-workspace` repo（`zeuikli/claude-code-workspace`）回傳 404，可能為私有或尚未建立。若需跨 repo 共用 Memory.md，需開放該 repo 的 MCP 存取權限。
+- `claude-code-workspace` repo（`zeuikli/claude-code-workspace`）已確認可透過 WebFetch 讀取（公開 repo），但 GitHub MCP 工具僅授權 `zeuikli/baby-diary`，無法透過 MCP 存取。
+
+---
+
+## Session: 2026-04-12 (2)
+
+### 完成事項
+
+#### 1. 讀取 `zeuikli/claude-code-workspace` repo
+- 透過 WebFetch 讀取了完整 repo 結構與所有檔案內容
+- GitHub MCP 工具確認仍限制為 `zeuikli/baby-diary`，無法存取其他 repo
+- 使用 `raw.githubusercontent.com` 成功讀取所有檔案
+
+#### 2. 更新 CLAUDE.md（整合 workspace 指引）
+- 從 `claude-code-workspace/CLAUDE.md` 整合以下最佳實踐：
+  - Sub Agent 策略增加 **IMPORTANT** 標記：研究工作委派 Sub Agent
+  - Context Window 增加 **YOU MUST** 標記與 **Compaction 指引**
+  - Git 推送增加 **指數退避重試機制**（2s/4s/8s/16s）
+  - 新增 **驗證與品質** 區塊（測試 + UI 驗證）
+  - 新增 **文件參照** 區塊，連結 workspace repo
+
+### `claude-code-workspace` repo 結構摘要
+```
+claude-code-workspace/
+├── .claude/
+│   ├── settings.json        # SessionStart + PreToolUse + PostToolUse hooks
+│   └── hooks/
+│       ├── session-init.sh       # 本機 git pull / 雲端 git clone
+│       ├── memory-pull.sh        # PreToolUse: 讀取前自動 fetch Memory.md
+│       ├── memory-sync.sh        # commit + push Memory.md（含重試）
+│       └── memory-update-hook.sh # PostToolUse: 偵測 Memory.md 修改後觸發同步
+├── CLAUDE.md    # 全域開發指引
+├── Memory.md    # 跨 session 記憶
+├── CHANGELOG.md # 變更紀錄
+└── README.md    # 說明文件
+```
+
+### 關鍵檔案
+| 檔案 | 說明 |
+|------|------|
+| `CLAUDE.md` | 已更新，整合 workspace 最佳實踐 |
+| `Memory.md` | 本檔案，新增本次 session 紀錄 |
+
+### 目前分支狀態
+- `claude/check-repo-access-BOiWw`：本次工作分支
