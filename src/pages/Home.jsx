@@ -67,6 +67,28 @@ export default function Home() {
   const solidsCount = today?.solids?.length || 0
   const activeSleep = today?.sleep?.find(s => !s.end)
 
+  // Elapsed time since last feeding / diaper
+  const getElapsed = (records) => {
+    if (!records || records.length === 0) return null
+    const last = [...records].sort((a, b) => (b.time || b.start || '').localeCompare(a.time || a.start || ''))[0]
+    const lastTime = last.time || last.start
+    if (!lastTime) return null
+    const now = new Date()
+    const [h, m] = lastTime.split(':').map(Number)
+    const recordDate = new Date(selectedDate + 'T00:00:00')
+    recordDate.setHours(h, m, 0, 0)
+    const diffMs = now - recordDate
+    if (diffMs < 0) return null
+    const diffMin = Math.floor(diffMs / 60000)
+    if (diffMin < 60) return `${diffMin} 分鐘前`
+    const diffH = Math.floor(diffMin / 60)
+    const remainMin = diffMin % 60
+    if (diffH < 24) return `${diffH} 小時 ${remainMin} 分鐘前`
+    return `超過 1 天前`
+  }
+  const feedingElapsed = isToday ? getElapsed(today?.feeding) : null
+  const diaperElapsed = isToday ? getElapsed(today?.diaper) : null
+
   return (
     <div className="px-4 pt-4 space-y-4 animate-fade-in">
       {/* Baby info banner */}
@@ -111,6 +133,7 @@ export default function Home() {
           icon="🍼"
           value={feedingCount > 0 ? `${feedingTotal}ml` : '—'}
           label={feedingCount > 0 ? `${feedingCount}次喝奶` : '尚無記錄'}
+          sub={feedingElapsed}
           color="text-blue-500"
           bg="bg-blue-50"
           onClick={() => navigate('/feeding')}
@@ -127,6 +150,7 @@ export default function Home() {
           icon="🫧"
           value={diaperCount > 0 ? `${diaperCount}次` : '—'}
           label={diaperCount > 0 ? '尿布更換' : '尚無記錄'}
+          sub={diaperElapsed}
           color="text-yellow-600"
           bg="bg-yellow-50"
           onClick={() => navigate('/diaper')}
@@ -231,7 +255,7 @@ function getBabyAge(birthdate) {
   return { months, days }
 }
 
-function SummaryCard({ icon, value, label, color, bg, onClick }) {
+function SummaryCard({ icon, value, label, sub, color, bg, onClick }) {
   return (
     <button
       onClick={onClick}
@@ -240,6 +264,7 @@ function SummaryCard({ icon, value, label, color, bg, onClick }) {
       <div className="text-xl mb-1">{icon}</div>
       <div className={`text-base font-bold ${color} leading-tight`}>{value}</div>
       <div className="text-[10px] text-gray-400 leading-tight mt-0.5">{label}</div>
+      {sub && <div className="text-[10px] text-gray-400 leading-tight mt-0.5">{sub}</div>}
     </button>
   )
 }
