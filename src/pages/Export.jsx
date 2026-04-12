@@ -144,53 +144,61 @@ export default function Export() {
     }
   }, [activeBabyId, activeBaby, fetchAllDays])
 
+  // "全部匯出" — merges all types into ONE CSV with a record_type column,
+  // avoiding the multiple-download browser blocking issue.
+  const ALL_COLS = ['record_type','date','time','start','end','type','amount_ml','duration_min','side','food','reaction','color','weight_kg','height_cm','head_cm','notes']
+
   const handleExportAll = useCallback(async () => {
     if (!activeBabyId) { toast.error('請先選擇寶寶'); return }
     setLoading(true)
     try {
-      // Fetch daily records once, reuse for all non-growth types
       const days = await fetchAllDays()
+      const sortedDays = days.sort((a, b) => (a.date || '').localeCompare(b.date || ''))
       const babyName = activeBaby?.name || 'baby'
-      const dateStr = new Date().toISOString().slice(0, 10)
-      let totalCount = 0
+      const allRows = []
 
-      for (const typeConfig of EXPORT_TYPES) {
-        let dataRows = []
-        if (typeConfig.id === 'growth') {
-          setProgress('讀取成長記錄...')
-          let records = []
-          if (githubService.isConfigured) {
-            records = await githubService.getGrowthRecords(activeBabyId)
-          } else {
-            records = ls.get(`growth_${activeBabyId}`) || []
-          }
-          dataRows = (Array.isArray(records) ? records : [])
-            .filter(Boolean)
-            .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
-            .map(r => typeConfig.row('', r))
-        } else {
-          days
-            .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
-            .forEach(day => {
-              const arr = day[typeConfig.id]
-              const recs = Array.isArray(arr) ? arr.filter(Boolean) : []
-              recs.forEach(r => dataRows.push(typeConfig.row(day.date, r)))
-            })
-        }
-        if (dataRows.length > 0) {
-          downloadCSV(`${babyName}_${typeConfig.id}_${dateStr}.csv`, typeConfig.cols, dataRows)
-          totalCount += dataRows.length
-        }
+      // Daily record types
+      for (const day of sortedDays) {
+        // feeding
+        const feedings = Array.isArray(day.feeding) ? day.feeding.filter(Boolean) : []
+        feedings.forEach(r => allRows.push(['feeding', day.date, r.time||'', '', '', r.feedType||'', r.amount??'', r.duration??'', r.side||'', '', '', '', '', '', '', r.notes||'']))
+        // sleep
+        const sleeps = Array.isArray(day.sleep) ? day.sleep.filter(Boolean) : []
+        sleeps.forEach(r => allRows.push(['sleep', day.date, '', r.start||'', r.end||'', '', '', '', '', '', '', '', '', '', '', r.notes||'']))
+        // diaper
+        const diapers = Array.isArray(day.diaper) ? day.diaper.filter(Boolean) : []
+        diapers.forEach(r => allRows.push(['diaper', day.date, r.time||'', '', '', r.diaperType||'', '', '', '', '', '', r.color||'', '', '', '', r.notes||'']))
+        // pumping
+        const pumpings = Array.isArray(day.pumping) ? day.pumping.filter(Boolean) : []
+        pumpings.forEach(r => allRows.push(['pumping', day.date, r.time||'', '', '', '', r.amount??'', r.duration??'', r.side||'', '', '', '', '', '', '', r.notes||'']))
+        // solids
+        const solids = Array.isArray(day.solids) ? day.solids.filter(Boolean) : []
+        solids.forEach(r => allRows.push(['solids', day.date, r.time||'', '', '', '', '', '', '', r.food||'', r.reaction||'', '', '', '', '', r.notes||'']))
       }
 
-      if (totalCount === 0) {
+      // Growth records (stored separately)
+      setProgress('讀取成長記錄...')
+      let growthRecs = []
+      if (githubService.isConfigured) {
+        growthRecs = await githubService.getGrowthRecords(activeBabyId)
+      } else {
+        growthRecs = ls.get(`growth_${activeBabyId}`) || []
+      }
+      ;(Array.isArray(growthRecs) ? growthRecs : [])
+        .filter(Boolean)
+        .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
+        .forEach(r => allRows.push(['growth', r.date||'', '', '', '', '', '', '', '', '', '', '', r.weight??'', r.height??'', r.headCirc??'', r.notes||'']))
+
+      if (allRows.length === 0) {
         toast.error('沒有任何記錄可以匯出')
       } else {
-        toast.success(`已匯出 ${totalCount} 筆記錄`)
+        const dateStr = new Date().toISOString().slice(0, 10)
+        downloadCSV(`${babyName}_all_${dateStr}.csv`, ALL_COLS, allRows)
+        toast.success(`已匯出 ${allRows.length} 筆記錄`)
       }
     } catch (e) {
-      console.error(e)
-      toast.error('匯出失敗，請稍後重試')
+      console.error('Export all error:', e)
+      toast.error(`全部匯出失敗：${e.message || '未知錯誤'}`)
     } finally {
       setLoading(false)
       setProgress('')
