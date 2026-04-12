@@ -51,3 +51,5 @@
 | `2ae7d46` | **ci: 升級 Node.js 20 → 24** — deploy.yml node-version 改 24 + `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`、package.json 加 `engines >= 24`、新建 `.nvmrc` |
 | `d6cff67` | **security: 綜合安全加固 (P0-P2)** — 移除 SW API 快取、加入 CSP、分享設定碼改用 AES-GCM 加密 + 匯入驗證、deepMerge 防護、.gitignore 補強、Actions 釘定 SHA。詳見 [SECURITY_AUDIT.md](./SECURITY_AUDIT.md) |
 | `dfa5da9` | **security(P0): serialize-javascript 6.0.2 → 7.0.5** — 精準 scope override 消除 HIGH 漏洞 (RCE + DoS)，剩餘僅 3 moderate dev-only |
+| `6962582` | **docs: 新增 CLAUDE.md** — 定義語言規則、Sub Agent 策略、Context Window 管理、Git 推送與文件更新規則 |
+| `7d18f0f` | **fix(settings): 修正加密功能在非安全上下文 (HTTP) 失敗** — 加入 `window.isSecureContext` + `crypto.subtle` 可用性檢查，Clipboard API 失敗時改顯示文字框供手動複製，解密流程同步加入安全偵測 |
