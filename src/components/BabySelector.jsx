@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { ChevronDown, Plus } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useNavigate } from 'react-router-dom'
@@ -8,6 +8,7 @@ export default function BabySelector() {
   const { babies, activeBaby, activeBabyId, setActiveBaby, selectedDate, setSelectedDate } = useApp()
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
+  const dateInputRef = useRef(null)
 
   const today = formatDate()
 
@@ -16,6 +17,11 @@ export default function BabySelector() {
     current.setDate(current.getDate() + delta)
     const newDate = formatDate(current)
     if (newDate <= today) setSelectedDate(newDate)
+  }
+
+  const handleDatePick = (e) => {
+    const val = e.target.value
+    if (val && val <= today) setSelectedDate(val)
   }
 
   const formatDisplayDate = (dateStr) => {
@@ -88,10 +94,19 @@ export default function BabySelector() {
           ‹
         </button>
         <button
-          onClick={() => setSelectedDate(today)}
-          className="text-xs font-medium text-gray-700 min-w-8 text-center touch-manipulation"
+          onClick={() => dateInputRef.current?.showPicker?.() || dateInputRef.current?.click()}
+          className="relative text-xs font-medium text-gray-700 min-w-8 text-center touch-manipulation"
         >
           {formatDisplayDate(selectedDate)}
+          <input
+            ref={dateInputRef}
+            type="date"
+            value={selectedDate}
+            max={today}
+            onChange={handleDatePick}
+            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+            tabIndex={-1}
+          />
         </button>
         <button
           onClick={() => handleDateChange(1)}
@@ -100,6 +115,14 @@ export default function BabySelector() {
         >
           ›
         </button>
+        {selectedDate !== today && (
+          <button
+            onClick={() => setSelectedDate(today)}
+            className="text-[10px] font-bold text-pink-500 bg-white rounded-md px-1.5 py-0.5 ml-0.5 border border-pink-200 active:scale-95 touch-manipulation"
+          >
+            今
+          </button>
+        )}
       </div>
     </div>
   )
