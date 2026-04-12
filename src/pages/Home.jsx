@@ -127,51 +127,27 @@ export default function Home() {
         </div>
       )}
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-2">
-        <SummaryCard
-          icon="🍼"
-          value={feedingCount > 0 ? `${feedingTotal}ml` : '—'}
-          label={feedingCount > 0 ? `${feedingCount}次喝奶` : '尚無記錄'}
-          sub={feedingElapsed}
-          color="text-blue-500"
-          bg="bg-blue-50"
-          onClick={() => navigate('/feeding')}
-        />
-        <SummaryCard
-          icon="😴"
-          value={sleepTotal > 0 ? `${Math.floor(sleepTotal / 60)}h${Math.floor(sleepTotal % 60)}m` : '—'}
-          label={today?.sleep?.length > 0 ? `${today.sleep.length}次睡眠` : '尚無記錄'}
-          color="text-purple-500"
-          bg="bg-purple-50"
-          onClick={() => navigate('/sleep')}
-        />
-        <SummaryCard
-          icon="🫧"
-          value={diaperCount > 0 ? `${diaperCount}次` : '—'}
-          label={diaperCount > 0 ? '尿布更換' : '尚無記錄'}
-          sub={diaperElapsed}
-          color="text-yellow-600"
-          bg="bg-yellow-50"
-          onClick={() => navigate('/diaper')}
-        />
-        <SummaryCard
-          icon="🤱"
-          value={pumpingCount > 0 ? `${pumpingTotal}ml` : '—'}
-          label={pumpingCount > 0 ? `${pumpingCount}次擠奶` : '尚無記錄'}
-          color="text-pink-500"
-          bg="bg-pink-50"
-          onClick={() => navigate('/pumping')}
-        />
-        <SummaryCard
-          icon="🥣"
-          value={solidsCount > 0 ? `${solidsCount}次` : '—'}
-          label={solidsCount > 0 ? '副食品' : '尚無記錄'}
-          color="text-green-600"
-          bg="bg-green-50"
-          onClick={() => navigate('/solids')}
-        />
-      </div>
+      {/* Summary cards — only show types that have records today */}
+      {(() => {
+        const cards = []
+        if (feedingCount > 0) cards.push(
+          <SummaryCard key="feeding" icon="🍼" value={`${feedingTotal}ml`} label={`${feedingCount}次喝奶`} sub={feedingElapsed} color="text-blue-500" bg="bg-blue-50" onClick={() => navigate('/feeding')} />
+        )
+        if (today?.sleep?.length > 0) cards.push(
+          <SummaryCard key="sleep" icon="😴" value={`${Math.floor(sleepTotal / 60)}h${Math.floor(sleepTotal % 60)}m`} label={`${today.sleep.length}次睡眠`} color="text-purple-500" bg="bg-purple-50" onClick={() => navigate('/sleep')} />
+        )
+        if (diaperCount > 0) cards.push(
+          <SummaryCard key="diaper" icon="🫧" value={`${diaperCount}次`} label="尿布更換" sub={diaperElapsed} color="text-yellow-600" bg="bg-yellow-50" onClick={() => navigate('/diaper')} />
+        )
+        if (pumpingCount > 0) cards.push(
+          <SummaryCard key="pumping" icon="🤱" value={`${pumpingTotal}ml`} label={`${pumpingCount}次擠奶`} color="text-pink-500" bg="bg-pink-50" onClick={() => navigate('/pumping')} />
+        )
+        if (solidsCount > 0) cards.push(
+          <SummaryCard key="solids" icon="🥣" value={`${solidsCount}次`} label="副食品" color="text-green-600" bg="bg-green-50" onClick={() => navigate('/solids')} />
+        )
+        if (cards.length === 0) return null
+        return <div className="grid grid-cols-3 gap-2">{cards}</div>
+      })()}
 
       {/* Quick action buttons */}
       <div>
