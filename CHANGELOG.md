@@ -65,3 +65,7 @@
 | `2901f62` | **chore: 升級 vite 5→7 消除 esbuild CVE** — vite 7.3.2 + @vitejs/plugin-react 5.2.0 + vite-plugin-pwa 1.2.0，npm audit 0 漏洞 |
 | `2027235` | **fix: PIN 最低 6 字元 + 密碼輸入框安全化；PAT 移出 React state** — Settings PIN 改 type="password"、長度驗證；AppContext 移除 token 欄位 |
 | `ce826ba` | **fix: Clickjacking 防護 + SPA redirect 路徑白名單** — 內聯腳本移至 spa-guard.js 符合 CSP；404.html 同步加固 |
+| `09bcc61` | **fix: 清理生產環境 console.error 敏感資訊洩漏** — 11 處 console.error 改為只輸出 e.message，消除 stack trace 曝露 |
+| `e02d611` | **fix(import): 加入檔案大小與列數限制** — 快速/手動匯入加入 10MB 上限 + 50,000 列限制，防止 Client-side DoS |
+| `72028c4` | **chore: 升級 React 18→19 + react-router-dom 6→7** — react 19.2.5、react-dom 19.2.5、react-router-dom 7.14.0，0 個檔案需修改 |
+| `398b9a2` | **fix: window.confirm 替換為 ConfirmModal** — 新增 ConfirmModal 元件，8 個頁面的 confirm() 改為應用內 Modal（防 Clickjacking 繞過） |

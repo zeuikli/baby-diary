@@ -185,12 +185,64 @@ claude-code-workspace/
 | `public/spa-guard.js` | 新建，Clickjacking + SPA redirect |
 | `public/404.html` | Clickjacking + 路徑白名單 |
 
-### Phase 2 待辦（排入例行維護）
-- React 18→19、Router 6→7 主版本升級
-- console.error 生產環境清理
-- window.confirm 改 Modal 確認
-- Import.jsx 檔案大小限制
+### 目前分支狀態
+- `main`：所有 Phase 1 修復已合併
+
+---
+
+## Session: 2026-04-13 (3)
+
+### 完成事項
+
+#### Phase 2 安全維護修復（4 個 Sub Agent 平行執行）
+
+1. **console.error 清理**（`09bcc61`）
+   - 11 處 console.error 改為只輸出 `e.message`，消除 stack trace
+   - 涵蓋：AppContext(4)、github.js(1)、Growth(1)、Diary(1)、Export(2)、Import(2)
+
+2. **window.confirm → ConfirmModal**（`398b9a2`）
+   - 新增 `src/components/modals/ConfirmModal.jsx` 通用確認對話框
+   - 8 個頁面全部替換：Feeding、Sleep、Diaper、Pumping、Solids、Growth、Diary、Settings
+   - 支援 danger 樣式（紅色按鈕用於刪除）
+
+3. **Import 檔案限制**（`e02d611`）
+   - 快速/手動匯入加入 10MB 上限
+   - CSV 解析後加入 50,000 列限制
+   - UI 顯示限制提示
+
+4. **React/Router 升級**（`72028c4`）
+   - react 18.3.1 → 19.2.5
+   - react-dom 18.3.1 → 19.2.5
+   - react-router-dom 6.30.3 → 7.14.0
+   - 0 個檔案需程式碼修改，建置通過
+
+### 修改檔案
+| 檔案 | 說明 |
+|------|------|
+| `src/components/modals/ConfirmModal.jsx` | 新建，通用確認 Modal |
+| `src/context/AppContext.jsx` | console.error 清理 |
+| `src/services/github.js` | console.error 清理 |
+| `src/pages/Feeding.jsx` | confirm → ConfirmModal |
+| `src/pages/Sleep.jsx` | confirm → ConfirmModal |
+| `src/pages/Diaper.jsx` | confirm → ConfirmModal |
+| `src/pages/Pumping.jsx` | confirm → ConfirmModal |
+| `src/pages/Solids.jsx` | confirm → ConfirmModal |
+| `src/pages/Growth.jsx` | confirm → ConfirmModal + console.error |
+| `src/pages/Diary.jsx` | confirm → ConfirmModal + console.error |
+| `src/pages/Settings.jsx` | confirm → ConfirmModal |
+| `src/pages/Export.jsx` | console.error 清理 |
+| `src/pages/Import.jsx` | 檔案大小限制 + console.error |
+| `package.json` / `package-lock.json` | React 19 + Router 7 升級 |
+
+### 驗證結果
+- `vite build`：通過
+- `npm audit`：0 vulnerabilities
+- `confirm()` 殘留：0 處
+- React 19 相容性：所有套件正常
+
+### 剩餘待辦
+- lucide-react 升級（消除 React 19 peer dep 警告）
 - 清除冗餘遠端分支
 
 ### 目前分支狀態
-- `main`：所有 Phase 1 修復已合併
+- `security/phase2-maintenance`：待審閱後 merge 至 main
