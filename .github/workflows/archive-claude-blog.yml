@@ -1,0 +1,64 @@
+name: Archive Claude Blog
+
+on:
+  schedule:
+    # 每天台灣時間 09:00 (UTC+8) = UTC 01:00
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+    # 可手動觸發
+
+permissions:
+  contents: write
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Create or switch to archive branch
+        run: |
+          git fetch origin archive/claude-blog || true
+          if git show-ref --verify --quiet refs/remotes/origin/archive/claude-blog; then
+            git checkout archive/claude-blog
+            git merge origin/main --no-edit --strategy-option theirs || true
+          else
+            git checkout -b archive/claude-blog
+          fi
+
+      - name: Run blog archiver
+        id: archiver
+        run: python scripts/fetch-claude-blog.py
+
+      - name: Commit and push changes
+        if: steps.archiver.outputs.has_changes == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add archive/claude-blog/
+          git commit -m "archive: update Claude blog articles ($(date -u +%Y-%m-%d))
+
+          New: ${{ steps.archiver.outputs.new_count }}
+          Updated: ${{ steps.archiver.outputs.updated_count }}
+          Total: ${{ steps.archiver.outputs.total_count }}"
+          git push -u origin archive/claude-blog
+
+      - name: Summary
+        run: |
+          echo "## Claude Blog Archive Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| New articles | ${{ steps.archiver.outputs.new_count || '0' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Updated articles | ${{ steps.archiver.outputs.updated_count || '0' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Total on listing | ${{ steps.archiver.outputs.total_count || '0' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Branch: \`archive/claude-blog\`" >> $GITHUB_STEP_SUMMARY

@@ -116,3 +116,37 @@ claude-code-workspace/
 
 ### 目前分支狀態
 - `claude/check-repo-access-BOiWw`：已 merge 至 main 並推送
+
+---
+
+## Session: 2026-04-13
+
+### 完成事項
+
+#### 1. Claude Blog 自動歸檔排程
+- **需求**：每天台灣 09:00 自動抓取 https://claude.com/blog 文章，歸檔到獨立 branch
+- **研究**：Webflow SSR 渲染、支援 JSON-LD metadata、curl 直接可用
+- **實作**：
+  - `scripts/fetch-claude-blog.py` — Python 爬蟲腳本（僅用標準庫，無需 pip install）
+    - 解析列表頁抓取所有文章 slug
+    - 逐篇抓取 JSON-LD metadata + HTML 正文轉 Markdown
+    - YAML front matter：title / slug / date / description / categories / image
+    - `index.json` 追蹤已歸檔文章，偵測新增/更新
+  - `.github/workflows/archive-claude-blog.yml` — GitHub Actions workflow
+    - cron: `0 1 * * *`（UTC 01:00 = 台灣 09:00）
+    - 支援 `workflow_dispatch` 手動觸發
+    - 歸檔到 `archive/claude-blog` branch
+    - 有變更才 commit + push
+    - Job Summary 顯示統計結果
+- **本地測試**：成功抓取 22 篇文章，YAML 語法驗證通過
+
+### 修改檔案
+| 檔案 | 說明 |
+|------|------|
+| `scripts/fetch-claude-blog.py` | 新建，Blog 爬蟲腳本 |
+| `.github/workflows/archive-claude-blog.yml` | 新建，定時排程 workflow |
+| `CHANGELOG.md` | 新增本次變更紀錄 |
+| `Memory.md` | 本檔案 |
+
+### 目前分支狀態
+- `claude/check-repo-access-BOiWw`：本次工作分支，待 merge 至 main
