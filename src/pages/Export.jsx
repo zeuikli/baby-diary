@@ -34,8 +34,12 @@ const EXPORT_TYPES = [
 ]
 
 function escapeCSV(val) {
-  const s = String(val ?? '')
-  if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+  let s = String(val ?? '')
+  // Prevent CSV formula injection
+  if (/^[=+\-@\t\r]/.test(s)) {
+    s = "'" + s
+  }
+  if (s.includes(',') || s.includes('"') || s.includes('\n') || s.startsWith("'")) {
     return `"${s.replace(/"/g, '""')}"`
   }
   return s

@@ -5,6 +5,20 @@
 
 const GITHUB_API = 'https://api.github.com'
 
+function sanitizePath(segment) {
+  if (!/^[a-zA-Z0-9_\-]+$/.test(segment)) {
+    throw new Error('Invalid path segment')
+  }
+  return segment
+}
+
+function sanitizeDateSegment(segment) {
+  if (!/^[0-9\-]+$/.test(segment)) {
+    throw new Error('Invalid date segment')
+  }
+  return segment
+}
+
 class GitHubService {
   constructor() {
     this.token = null
@@ -114,12 +128,15 @@ class GitHubService {
 
   dayPath(date) {
     const d = typeof date === 'string' ? date : formatDate(date)
+    sanitizeDateSegment(d)
     const [year, month] = d.split('-')
+    sanitizeDateSegment(year)
+    sanitizeDateSegment(month)
     return `records/${year}-${month}/${d}.json`
   }
 
   babyPath(babyId) {
-    return `babies/${babyId}.json`
+    return `babies/${sanitizePath(babyId)}.json`
   }
 
   // ─── Baby Management ───────────────────────────────────────
@@ -156,6 +173,7 @@ class GitHubService {
   // ─── Daily Records ─────────────────────────────────────────
 
   async getDayRecord(babyId, date) {
+    sanitizePath(babyId)
     const d = typeof date === 'string' ? date : formatDate(date)
     const path = `${babyId}/${this.dayPath(d)}`
     const result = await this.getFile(path)
@@ -163,6 +181,7 @@ class GitHubService {
   }
 
   async saveDayRecord(babyId, date, record) {
+    sanitizePath(babyId)
     const d = typeof date === 'string' ? date : formatDate(date)
     const path = `${babyId}/${this.dayPath(d)}`
     this._cache.set(path, { content: record, sha: this._cache.get(path)?.sha })
@@ -171,6 +190,7 @@ class GitHubService {
   }
 
   async saveDayRecordNow(babyId, date, record) {
+    sanitizePath(babyId)
     const d = typeof date === 'string' ? date : formatDate(date)
     const path = `${babyId}/${this.dayPath(d)}`
     await this.putFile(path, record, `Update records: ${d}`)
@@ -180,6 +200,9 @@ class GitHubService {
   // ─── Range Query ───────────────────────────────────────────
 
   async getMonthRecords(babyId, year, month) {
+    sanitizePath(babyId)
+    sanitizeDateSegment(String(year))
+    sanitizeDateSegment(String(month))
     const monthStr = `${year}-${String(month).padStart(2, '0')}`
     const dirPath = `${babyId}/records/${monthStr}`
 
@@ -204,12 +227,14 @@ class GitHubService {
   // ─── Growth Records ────────────────────────────────────────
 
   async getGrowthRecords(babyId) {
+    sanitizePath(babyId)
     const path = `${babyId}/growth.json`
     const result = await this.getFile(path)
     return result?.content || []
   }
 
   async addGrowthRecord(babyId, record) {
+    sanitizePath(babyId)
     const records = await this.getGrowthRecords(babyId)
     const existing = records.findIndex(r => r.date === record.date)
     if (existing >= 0) {
@@ -225,6 +250,9 @@ class GitHubService {
   // ─── Diary ────────────────────────────────────────────────
 
   async getDiaryEntries(babyId, year, month) {
+    sanitizePath(babyId)
+    sanitizeDateSegment(String(year))
+    sanitizeDateSegment(String(month))
     const monthStr = `${year}-${String(month).padStart(2, '0')}`
     const path = `${babyId}/diary/${monthStr}.json`
     const result = await this.getFile(path)
@@ -232,7 +260,9 @@ class GitHubService {
   }
 
   async saveDiaryEntry(babyId, entry) {
+    sanitizePath(babyId)
     const date = entry.date
+    sanitizeDateSegment(date)
     const [year, month] = date.split('-')
     const monthStr = `${year}-${month}`
     const path = `${babyId}/diary/${monthStr}.json`
