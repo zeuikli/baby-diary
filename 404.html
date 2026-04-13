@@ -4,17 +4,30 @@
   <meta charset="utf-8">
   <title>寶寶成長日記</title>
   <script>
+    // Clickjacking 防護：偵測 iframe 嵌入
+    if (window.top !== window.self) { window.top.location = window.self.location; }
     // SPA redirect for GitHub Pages
     // Stores the path in sessionStorage and redirects to index.html
     var pathSegmentsToKeep = 1; // /baby-diary
     var l = window.location;
-    l.replace(
+    var redirectTarget =
       l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
       l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
       l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
       (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-      l.hash
-    );
+      l.hash;
+    // 路徑白名單驗證：防止開放重定向
+    var parsedPath = redirectTarget.replace(/^[a-z][a-z0-9+\-.]*:\/\/[^/]*/i, '');
+    if (
+      parsedPath.charAt(0) === '/' &&
+      parsedPath.indexOf('://') === -1 &&
+      parsedPath.indexOf('//') !== 0 &&
+      parsedPath.indexOf('\\') === -1
+    ) {
+      l.replace(redirectTarget);
+    } else {
+      l.replace(l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + '/');
+    }
   </script>
 </head>
 <body>載入中...</body>

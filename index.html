@@ -12,20 +12,9 @@
     <title>寶寶成長日記</title>
     <meta name="description" content="記錄寶寶每天的喝奶、睡眠、尿布和成長軌跡" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.github.com; img-src 'self' data: blob:; font-src 'self'; manifest-src 'self'; worker-src 'self';">
-    <!-- GitHub Pages SPA redirect restore -->
-    <script>
-      (function(l) {
-        if (l.search[1] === '/') {
-          var decoded = l.search.slice(1).split('&').map(function(s) {
-            return s.replace(/~and~/g, '&')
-          }).join('?');
-          window.history.replaceState(null, null,
-            l.pathname.slice(0, -1) + decoded + l.hash
-          );
-        }
-      }(window.location))
-    </script>
-    <script type="module" crossorigin src="/baby-diary/assets/index-ls4eLj89.js"></script>
+    <!-- Clickjacking 防護 + SPA redirect（外部腳本以符合 CSP script-src 'self'）-->
+    <script src="/baby-diary/spa-guard.js"></script>
+    <script type="module" crossorigin src="/baby-diary/assets/index-DEML_-De.js"></script>
     <link rel="stylesheet" crossorigin href="/baby-diary/assets/index-DQiBodG7.css">
   <link rel="manifest" href="/baby-diary/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/baby-diary/registerSW.js"></script></head>
   <body>
