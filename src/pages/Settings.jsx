@@ -3,6 +3,7 @@ import { Save, Plus, Trash2, Github, Database, Bell, Info, ChevronRight, Eye, Ey
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { generateId } from '../services/github'
+import { settings as settingsStore } from '../services/localStorage'
 import Modal from '../components/Modal'
 import toast from 'react-hot-toast'
 
@@ -12,7 +13,10 @@ export default function Settings() {
   const navigate = useNavigate()
   const { github, isGitHubConfigured, autoConfigured, babies, activeBabyId, updateGitHub, saveBaby, deleteBaby, setActiveBaby, enableDiary, setEnableDiary } = useApp()
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
-  const [githubForm, setGithubForm] = useState({ ...github })
+  const [githubForm, setGithubForm] = useState(() => {
+    const savedToken = settingsStore.get()?.github?.token || ''
+    return { token: savedToken, owner: github.owner, repo: github.repo }
+  })
   const [showToken, setShowToken] = useState(false)
   const [saving, setSaving] = useState(false)
   const [showBabyModal, setShowBabyModal] = useState(false)
@@ -31,7 +35,7 @@ export default function Settings() {
 
   const handleCopyShareCode = async () => {
     if (!isGitHubConfigured) { toast.error('請先完成 GitHub 設定'); return }
-    if (sharePin.length < 4) { toast.error('請輸入至少 4 碼的加密密碼'); return }
+    if (sharePin.length < 6) { toast.error('加密密碼至少需要 6 個字元'); return }
 
     if (!window.isSecureContext || !crypto.subtle) {
       toast.error('加密功能需要 HTTPS 安全連線，請確認網址為 https:// 或 localhost')
@@ -40,7 +44,8 @@ export default function Settings() {
 
     try {
       const enc = new TextEncoder()
-      const plain = enc.encode(JSON.stringify({ token: github.token, owner: github.owner, repo: github.repo }))
+      const savedToken = settingsStore.get()?.github?.token || ''
+      const plain = enc.encode(JSON.stringify({ token: savedToken, owner: github.owner, repo: github.repo }))
       const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(sharePin), 'PBKDF2', false, ['deriveKey'])
       const salt = crypto.getRandomValues(new Uint8Array(16))
       const iv = crypto.getRandomValues(new Uint8Array(12))
@@ -70,7 +75,7 @@ export default function Settings() {
 
   const handleImportShareCode = async () => {
     if (!shareCode.trim()) { toast.error('請貼上設定碼'); return }
-    if (sharePin.length < 4) { toast.error('請輸入密碼以解密設定碼'); return }
+    if (sharePin.length < 6) { toast.error('解密密碼至少需要 6 個字元'); return }
     if (!window.isSecureContext || !crypto.subtle) {
       toast.error('解密功能需要 HTTPS 安全連線，請確認網址為 https:// 或 localhost')
       return
@@ -330,15 +335,15 @@ export default function Settings() {
         <div className="mt-3">
           <label className="form-label">加密密碼</label>
           <input
-            type="text"
-            inputMode="numeric"
-            placeholder="請輸入至少 4 碼的密碼"
+            type="password"
+            autoComplete="off"
+            placeholder="請輸入至少 6 個字元的密碼"
             value={sharePin}
             onChange={e => setSharePin(e.target.value)}
-            className="form-input text-center tracking-widest font-mono"
-            maxLength={20}
+            className="form-input font-mono"
+            maxLength={64}
           />
-          <p className="text-xs text-gray-400 mt-1">複製和貼上設定碼時都需要輸入相同的密碼</p>
+          <p className="text-xs text-gray-400 mt-1">至少 6 個字元，複製和貼上設定碼時需輸入相同密碼</p>
         </div>
         <p className="text-xs text-gray-400 mt-2">⚠️ 設定碼已加密保護，請將密碼和設定碼分別透過不同管道傳給家人</p>
       </Section>

@@ -6,8 +6,8 @@ import toast from 'react-hot-toast'
 const AppContext = createContext(null)
 
 const initialState = {
-  // Settings
-  github: { token: '', owner: '', repo: '' },
+  // Settings (token intentionally excluded — never stored in React state)
+  github: { owner: '', repo: '' },
   isGitHubConfigured: false,
   autoConfigured: false, // true = injected from build-time secret
 
@@ -35,7 +35,7 @@ function reducer(state, action) {
     case 'INIT':
       return { ...state, ...action.payload }
     case 'SET_GITHUB':
-      return { ...state, github: action.payload, isGitHubConfigured: !!(action.payload.token && action.payload.owner && action.payload.repo) }
+      return { ...state, github: { owner: action.payload.owner, repo: action.payload.repo }, isGitHubConfigured: !!(action.payload.owner && action.payload.repo && githubService.isConfigured) }
     case 'SET_BABIES':
       return { ...state, babies: action.payload }
     case 'SET_ACTIVE_BABY':
@@ -111,10 +111,10 @@ export function AppProvider({ children }) {
   useEffect(() => {
     const saved = settingsStore.get()
 
-    // Token ONLY from localStorage (manual input in Settings — never from build env)
+    // Token ONLY from localStorage (manual input in Settings — never from build env, never in React state)
     // Owner/repo can be pre-filled from build-time env (not sensitive)
+    const token = saved.github?.token || ''
     const github = {
-      token: saved.github?.token || '',
       owner: ENV_OWNER || saved.github?.owner || '',
       repo:  ENV_REPO  || saved.github?.repo  || '',
     }
@@ -122,11 +122,15 @@ export function AppProvider({ children }) {
     const babies = (saved.babies || []).map(repairBaby)
     const activeBabyId = saved.activeBabyId || (babies[0]?.id ?? null)
 
+    if (token && github.owner && github.repo) {
+      githubService.init({ token, ...github })
+    }
+
     dispatch({
       type: 'INIT',
       payload: {
         github,
-        isGitHubConfigured: !!(github.token && github.owner && github.repo),
+        isGitHubConfigured: !!(token && github.owner && github.repo),
         enableDiary: saved.enableDiary || false,
         babies,
         activeBabyId,
@@ -134,8 +138,7 @@ export function AppProvider({ children }) {
       }
     })
 
-    if (github.token && github.owner && github.repo) {
-      githubService.init(github)
+    if (token && github.owner && github.repo) {
       // Sync babies from GitHub on startup so other devices see up-to-date list
       githubService.getBabies().then(remoteBabies => {
         if (remoteBabies.length === 0) return
@@ -300,9 +303,11 @@ export function AppProvider({ children }) {
   }, [])
 
   const updateGitHub = useCallback(async (config) => {
-    dispatch({ type: 'SET_GITHUB', payload: config })
-    settingsStore.update({ github: config })
-    githubService.init(config)
+    // token must not be stored in React state — only passed to githubService and settingsStore
+    const { token, owner, repo } = config
+    githubService.init({ token, owner, repo })
+    settingsStore.update({ github: { token, owner, repo } })
+    dispatch({ type: 'SET_GITHUB', payload: { owner, repo } })
 
     try {
       await githubService.verifyAccess()
