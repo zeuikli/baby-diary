@@ -184,7 +184,7 @@ export function AppProvider({ children }) {
         dispatch({ type: 'SET_TODAY', payload: record })
       }
     } catch (e) {
-      console.error('Failed to load day record:', e)
+      console.error('[AppContext] 載入日記錄失敗:', e.message || '未知錯誤')
       dispatch({ type: 'SET_TODAY', payload: createEmptyDay(date, babyId) })
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false })
@@ -203,7 +203,7 @@ export function AppProvider({ children }) {
         ls.set(`day_${state.activeBabyId}_${state.selectedDate}`, updatedDay)
       }
     } catch (e) {
-      console.error('Save failed:', e)
+      console.error('[AppContext] 儲存失敗:', e.message || '未知錯誤')
       toast.error('儲存失敗，請稍後重試')
     } finally {
       dispatch({ type: 'SET_SYNCING', payload: false })
@@ -252,7 +252,7 @@ export function AppProvider({ children }) {
     }
     if (githubService.isConfigured) {
       try { await githubService.deleteBaby(babyId) } catch (e) {
-        console.error('Failed to delete baby from GitHub:', e)
+        console.error('[AppContext] 刪除寶寶資料失敗:', e.message || '未知錯誤')
       }
     }
   }, [state.babies, state.activeBabyId])
@@ -270,7 +270,7 @@ export function AppProvider({ children }) {
       try {
         await githubService.saveBaby(baby)
       } catch (e) {
-        console.error('Failed to save baby to GitHub:', e)
+        console.error('[AppContext] 儲存寶寶資料失敗:', e.message || '未知錯誤')
       }
     }
 

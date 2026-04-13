@@ -119,7 +119,7 @@ class GitHubService {
       try {
         await this.putFile(path, content)
       } catch (e) {
-        console.error('Write failed:', path, e)
+        console.error('[GitHub] 寫入失敗:', e.message || '未知錯誤')
       }
     }
   }

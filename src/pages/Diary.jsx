@@ -64,7 +64,7 @@ export default function Diary() {
       }
       setEntries(data)
     } catch (e) {
-      console.error(e)
+      console.error('[Diary] 載入日記失敗:', e.message || '未知錯誤')
     } finally {
       setLoading(false)
     }

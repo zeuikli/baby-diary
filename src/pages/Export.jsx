@@ -146,7 +146,7 @@ export default function Export() {
       downloadCSV(filename, typeConfig.cols, dataRows)
       toast.success(`已匯出 ${dataRows.length} 筆${typeConfig.label}記錄`)
     } catch (e) {
-      console.error('Export error:', e)
+      console.error('[Export] 匯出失敗:', e.message || '未知錯誤')
       toast.error(`匯出${typeConfig.label}失敗：${e.message || '未知錯誤'}`)
     } finally {
       setLoading(false)
@@ -207,7 +207,7 @@ export default function Export() {
         toast.success(`已匯出 ${allRows.length} 筆記錄`)
       }
     } catch (e) {
-      console.error('Export all error:', e)
+      console.error('[Export] 全部匯出失敗:', e.message || '未知錯誤')
       toast.error(`全部匯出失敗：${e.message || '未知錯誤'}`)
     } finally {
       setLoading(false)

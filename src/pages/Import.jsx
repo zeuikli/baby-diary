@@ -383,7 +383,7 @@ export default function Import() {
       setQuickPreview(null)
       toast.success(`成功匯入 ${total} 筆記錄！`)
     } catch (err) {
-      console.error(err)
+      console.error('[Import] 快速匯入失敗:', err.message || '未知錯誤')
       toast.error('匯入失敗：' + err.message)
     } finally {
       setQuickImporting(false)
@@ -442,7 +442,7 @@ export default function Import() {
       setDone(preview.valid.length); setPreview(null)
       toast.success(`成功匯入 ${preview.valid.length} 筆記錄！`)
     } catch (err) {
-      console.error(err); toast.error('匯入失敗：' + err.message)
+      console.error('[Import] 手動匯入失敗:', err.message || '未知錯誤'); toast.error('匯入失敗：' + err.message)
     } finally {
       setImporting(false)
       setManualProgress(null)

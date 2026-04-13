@@ -37,7 +37,7 @@ export default function Growth() {
       }
       setRecords(data.sort((a, b) => a.date.localeCompare(b.date)))
     } catch (e) {
-      console.error(e)
+      console.error('[Growth] 載入成長記錄失敗:', e.message || '未知錯誤')
     } finally {
       setLoading(false)
     }
