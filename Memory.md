@@ -149,4 +149,48 @@ claude-code-workspace/
 | `Memory.md` | 本檔案 |
 
 ### 目前分支狀態
-- `claude/check-repo-access-BOiWw`：本次工作分支，待 merge 至 main
+- `main`：Blog archiver 已移除，轉至 claude-code-workspace
+
+---
+
+## Session: 2026-04-13 (2)
+
+### 完成事項
+
+#### 1. 全面安全審查（4 個 Sub Agent 平行掃描）
+- **依賴套件掃描**：3 moderate CVE（esbuild via vite）、多個主版本落後
+- **服務/資料層審查**：deepMerge prototype pollution、PIN 強度不足、PAT 明文存 Context、path traversal 等
+- **前端 UI 層審查**：CSP unsafe-inline、SPA redirect 開放重定向、Clickjacking 無防護等
+- **Git 歷史掃描**：清潔，無 secret 洩漏
+
+#### 2. Phase 1 安全修復（P1 + 關鍵 P2）
+- **vite 5→7 升級**（`2901f62`）：消除 esbuild CVE，npm audit 0 漏洞
+- **path traversal 防護**（`62e41fc`）：github.js 加入 sanitizePath + sanitizeDateSegment
+- **CSV formula injection**（`62e41fc`）：Export.jsx escapeCSV 攔截 `=+\-@` 前綴
+- **PIN 安全化**（`2027235`）：改 type="password"、最低 6 字元
+- **PAT 移出 Context**（`2027235`）：token 不再存於 React state
+- **Clickjacking 防護**（`ce826ba`）：framebusting 腳本 + iframe 偵測
+- **SPA redirect 白名單**（`ce826ba`）：路徑驗證防開放重定向
+- **CSP 合規**（`ce826ba`）：內聯腳本移至 spa-guard.js
+
+### 修改檔案
+| 檔案 | 說明 |
+|------|------|
+| `package.json` / `package-lock.json` | vite 7 升級 |
+| `src/services/github.js` | sanitizePath / sanitizeDateSegment |
+| `src/pages/Export.jsx` | escapeCSV formula injection 防護 |
+| `src/pages/Settings.jsx` | PIN type="password" + 6 字元驗證 |
+| `src/context/AppContext.jsx` | PAT 移出 state |
+| `index.html` | 內聯腳本改外部引用 |
+| `public/spa-guard.js` | 新建，Clickjacking + SPA redirect |
+| `public/404.html` | Clickjacking + 路徑白名單 |
+
+### Phase 2 待辦（排入例行維護）
+- React 18→19、Router 6→7 主版本升級
+- console.error 生產環境清理
+- window.confirm 改 Modal 確認
+- Import.jsx 檔案大小限制
+- 清除冗餘遠端分支
+
+### 目前分支狀態
+- `main`：所有 Phase 1 修復已合併

@@ -60,4 +60,8 @@
 
 | Commit | 說明 |
 | --- | --- |
-| *(pending)* | **ci: 新增 Claude Blog 自動歸檔排程** — GitHub Actions workflow 每天台灣 09:00 抓取 claude.com/blog 文章，歸檔至 `archive/claude-blog` branch，Python 爬蟲腳本僅用標準庫 |
+| `3b5bfc9` | **chore: 移除 Claude Blog archiver** — 功能轉移至 claude-code-workspace repo |
+| `62e41fc` | **fix: path traversal + CSV formula injection 防護** — github.js 加入 sanitizePath/sanitizeDateSegment 白名單驗證；Export.jsx escapeCSV 攔截 `=+\-@` 前綴 |
+| `2901f62` | **chore: 升級 vite 5→7 消除 esbuild CVE** — vite 7.3.2 + @vitejs/plugin-react 5.2.0 + vite-plugin-pwa 1.2.0，npm audit 0 漏洞 |
+| `2027235` | **fix: PIN 最低 6 字元 + 密碼輸入框安全化；PAT 移出 React state** — Settings PIN 改 type="password"、長度驗證；AppContext 移除 token 欄位 |
+| `ce826ba` | **fix: Clickjacking 防護 + SPA redirect 路徑白名單** — 內聯腳本移至 spa-guard.js 符合 CSP；404.html 同步加固 |
