@@ -307,6 +307,11 @@ export default function Import() {
 
   const handleQuickFile = (e) => {
     const file = e.target.files[0]; if (!file) return
+    const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error('檔案過大（上限 10MB）')
+      return
+    }
     const reader = new FileReader()
     reader.onload = (ev) => {
       const result = parseBabyDiaryExport(ev.target.result)
@@ -395,10 +400,20 @@ export default function Import() {
 
   const handleManualFile = (e) => {
     const file = e.target.files[0]; if (!file) return
+    const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error('檔案過大（上限 10MB）')
+      return
+    }
     const reader = new FileReader()
     reader.onload = (ev) => {
       const { rows } = parseCSV(ev.target.result)
       if (!rows.length) { toast.error('CSV 檔案無資料'); return }
+      const MAX_ROWS = 50000
+      if (rows.length > MAX_ROWS) {
+        toast.error(`超過最大列數限制（${MAX_ROWS.toLocaleString()} 列）`)
+        return
+      }
       const convert = CONVERTERS[selectedType]
       const valid = []; const errors = []
       rows.forEach((row, idx) => {
@@ -507,6 +522,7 @@ export default function Import() {
               <span className="text-xs text-gray-400">寶寶成長日記原始匯出，無需修改格式</span>
             </button>
             <input ref={quickRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleQuickFile} />
+            <p className="text-xs text-gray-400 text-center mt-2">檔案上限 10 MB</p>
           </div>
 
           {/* Preview */}
@@ -625,6 +641,7 @@ export default function Import() {
               <span className="text-xs text-gray-400">支援 UTF-8 / BOM 編碼，逗號或 Tab 分隔</span>
             </button>
             <input ref={manualRef} type="file" accept=".csv,text/csv,.tsv" className="hidden" onChange={handleManualFile} />
+            <p className="text-xs text-gray-400 text-center mt-2">檔案上限 10 MB，最多 50,000 列</p>
           </div>
 
           {/* Preview */}
