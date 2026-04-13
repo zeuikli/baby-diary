@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Plus, Trash2, Edit2 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import QuickSolidsModal from '../components/modals/QuickSolidsModal'
+import ConfirmModal from '../components/modals/ConfirmModal'
 import EmptyState from '../components/EmptyState'
 
 const reactionConfig = {
@@ -15,13 +16,12 @@ export default function Solids() {
   const { today, deleteRecord } = useApp()
   const [showModal, setShowModal] = useState(false)
   const [editRecord, setEditRecord] = useState(null)
+  const [confirmState, setConfirmState] = useState(null)
 
   const records = today?.solids || []
 
   const handleDelete = (id) => {
-    if (confirm('確定刪除此記錄？')) {
-      deleteRecord('solids', id)
-    }
+    setConfirmState({ id })
   }
 
   return (
@@ -103,6 +103,15 @@ export default function Solids() {
       {showModal && (
         <QuickSolidsModal editRecord={editRecord} onClose={() => { setShowModal(false); setEditRecord(null) }} />
       )}
+      <ConfirmModal
+        isOpen={!!confirmState}
+        title="確認刪除"
+        message="確定刪除此記錄？"
+        confirmLabel="刪除"
+        confirmStyle="danger"
+        onConfirm={() => { deleteRecord('solids', confirmState.id); setConfirmState(null) }}
+        onCancel={() => setConfirmState(null)}
+      />
     </div>
   )
 }

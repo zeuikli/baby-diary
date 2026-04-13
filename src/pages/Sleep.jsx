@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Plus, Trash2, Edit2 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import QuickSleepModal from '../components/modals/QuickSleepModal'
+import ConfirmModal from '../components/modals/ConfirmModal'
 import EmptyState from '../components/EmptyState'
 
 function calcDurationMins(start, end) {
@@ -23,6 +24,7 @@ export default function Sleep() {
   const { today, deleteRecord, loading } = useApp()
   const [showModal, setShowModal] = useState(false)
   const [editRecord, setEditRecord] = useState(null)
+  const [confirmState, setConfirmState] = useState(null)
 
   const records = today?.sleep || []
   const activeSleep = records.find(r => !r.end)
@@ -30,9 +32,7 @@ export default function Sleep() {
   const totalMins = completedSleeps.reduce((s, r) => s + calcDurationMins(r.start, r.end), 0)
 
   const handleDelete = (id) => {
-    if (confirm('確定刪除此記錄？')) {
-      deleteRecord('sleep', id)
-    }
+    setConfirmState({ id })
   }
 
   return (
@@ -152,6 +152,15 @@ export default function Sleep() {
           onClose={() => { setShowModal(false); setEditRecord(null) }}
         />
       )}
+      <ConfirmModal
+        isOpen={!!confirmState}
+        title="確認刪除"
+        message="確定刪除此記錄？"
+        confirmLabel="刪除"
+        confirmStyle="danger"
+        onConfirm={() => { deleteRecord('sleep', confirmState.id); setConfirmState(null) }}
+        onCancel={() => setConfirmState(null)}
+      />
     </div>
   )
 }

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Plus, Trash2, Edit2 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import QuickDiaperModal from '../components/modals/QuickDiaperModal'
+import ConfirmModal from '../components/modals/ConfirmModal'
 import EmptyState from '../components/EmptyState'
 
 const sideLabel = { left: '左側', right: '右側', both: '雙側' }
@@ -10,14 +11,13 @@ export default function Pumping() {
   const { today, deleteRecord } = useApp()
   const [showModal, setShowModal] = useState(false)
   const [editRecord, setEditRecord] = useState(null)
+  const [confirmState, setConfirmState] = useState(null)
 
   const records = today?.pumping || []
   const totalAmount = records.reduce((s, r) => s + (r.amount || 0), 0)
 
   const handleDelete = (id) => {
-    if (confirm('確定刪除此記錄？')) {
-      deleteRecord('pumping', id)
-    }
+    setConfirmState({ id })
   }
 
   return (
@@ -91,6 +91,15 @@ export default function Pumping() {
       {showModal && (
         <QuickDiaperModal type="pumping" editRecord={editRecord} onClose={() => { setShowModal(false); setEditRecord(null) }} />
       )}
+      <ConfirmModal
+        isOpen={!!confirmState}
+        title="確認刪除"
+        message="確定刪除此記錄？"
+        confirmLabel="刪除"
+        confirmStyle="danger"
+        onConfirm={() => { deleteRecord('pumping', confirmState.id); setConfirmState(null) }}
+        onCancel={() => setConfirmState(null)}
+      />
     </div>
   )
 }

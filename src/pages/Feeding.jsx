@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Plus, Trash2, Edit2 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import QuickFeedingModal from '../components/modals/QuickFeedingModal'
+import ConfirmModal from '../components/modals/ConfirmModal'
 import EmptyState from '../components/EmptyState'
 import toast from 'react-hot-toast'
 
@@ -12,15 +13,14 @@ export default function Feeding() {
   const { today, deleteRecord, loading } = useApp()
   const [showModal, setShowModal] = useState(false)
   const [editRecord, setEditRecord] = useState(null)
+  const [confirmState, setConfirmState] = useState(null)
 
   const records = today?.feeding || []
   const totalAmount = records.reduce((s, r) => s + (r.amount || 0), 0)
   const totalDuration = records.reduce((s, r) => s + (r.duration || 0), 0)
 
   const handleDelete = (id) => {
-    if (confirm('確定刪除此記錄？')) {
-      deleteRecord('feeding', id)
-    }
+    setConfirmState({ id })
   }
 
   const handleEdit = (record) => {
@@ -116,6 +116,15 @@ export default function Feeding() {
           editRecord={editRecord}
         />
       )}
+      <ConfirmModal
+        isOpen={!!confirmState}
+        title="確認刪除"
+        message="確定刪除此記錄？"
+        confirmLabel="刪除"
+        confirmStyle="danger"
+        onConfirm={() => { deleteRecord('feeding', confirmState.id); setConfirmState(null) }}
+        onCancel={() => setConfirmState(null)}
+      />
     </div>
   )
 }

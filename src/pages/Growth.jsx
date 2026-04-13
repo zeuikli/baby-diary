@@ -7,6 +7,7 @@ import { useApp } from '../context/AppContext'
 import { githubService, generateId } from '../services/github'
 import { ls } from '../services/localStorage'
 import Modal from '../components/Modal'
+import ConfirmModal from '../components/modals/ConfirmModal'
 import EmptyState from '../components/EmptyState'
 import toast from 'react-hot-toast'
 import { getWhoReference, estimatePercentile } from '../data/whoStandards'
@@ -24,6 +25,7 @@ export default function Growth() {
   const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('weight')
   const [loading, setLoading] = useState(false)
+  const [confirmState, setConfirmState] = useState(null)
 
   const loadRecords = useCallback(async () => {
     if (!activeBabyId) return
@@ -79,8 +81,11 @@ export default function Growth() {
     }
   }
 
-  const handleDelete = async (id) => {
-    if (!confirm('確定刪除？')) return
+  const handleDelete = (id) => {
+    setConfirmState({ id })
+  }
+
+  const doDelete = async (id) => {
     const updated = records.filter(r => r.id !== id)
     setRecords(updated)
     if (githubService.isConfigured) {
@@ -351,6 +356,15 @@ export default function Growth() {
           </button>
         </div>
       </Modal>
+      <ConfirmModal
+        isOpen={!!confirmState}
+        title="確認刪除"
+        message="確定刪除此成長記錄？"
+        confirmLabel="刪除"
+        confirmStyle="danger"
+        onConfirm={() => { doDelete(confirmState.id); setConfirmState(null) }}
+        onCancel={() => setConfirmState(null)}
+      />
     </div>
   )
 }

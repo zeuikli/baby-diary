@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext'
 import { githubService, generateId, formatDate } from '../services/github'
 import { ls } from '../services/localStorage'
 import Modal from '../components/Modal'
+import ConfirmModal from '../components/modals/ConfirmModal'
 import EmptyState from '../components/EmptyState'
 import toast from 'react-hot-toast'
 
@@ -50,6 +51,7 @@ export default function Diary() {
   const [showModal, setShowModal] = useState(false)
   const [editEntry, setEditEntry] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [confirmState, setConfirmState] = useState(null)
   const [currentMonth, setCurrentMonth] = useState({ year: new Date().getFullYear(), month: new Date().getMonth() + 1 })
 
   const loadEntries = useCallback(async () => {
@@ -104,7 +106,6 @@ export default function Diary() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('確定刪除此日記？')) return
     const updated = entries.filter(e => e.id !== id)
     setEntries(updated)
     if (githubService.isConfigured) {
@@ -173,7 +174,7 @@ export default function Diary() {
                   <button onClick={() => { setEditEntry(entry); setShowModal(true) }} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 touch-manipulation">
                     <Edit2 size={14} />
                   </button>
-                  <button onClick={() => handleDelete(entry.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-400 touch-manipulation">
+                  <button onClick={() => setConfirmState({ id: entry.id })} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-400 touch-manipulation">
                     <Trash2 size={14} />
                   </button>
                 </div>
@@ -207,6 +208,16 @@ export default function Diary() {
           moods={moods}
         />
       )}
+
+      <ConfirmModal
+        isOpen={!!confirmState}
+        title="確認刪除"
+        message="確定刪除此日記？此操作無法復原。"
+        confirmLabel="刪除"
+        confirmStyle="danger"
+        onConfirm={() => { handleDelete(confirmState?.id); setConfirmState(null) }}
+        onCancel={() => setConfirmState(null)}
+      />
     </div>
   )
 }

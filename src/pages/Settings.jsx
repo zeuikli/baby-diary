@@ -5,6 +5,7 @@ import { useApp } from '../context/AppContext'
 import { generateId } from '../services/github'
 import { settings as settingsStore } from '../services/localStorage'
 import Modal from '../components/Modal'
+import ConfirmModal from '../components/modals/ConfirmModal'
 import toast from 'react-hot-toast'
 
 const AVATARS = ['👶', '🧒', '👦', '👧', '🐣', '🌸', '⭐', '🌈']
@@ -13,6 +14,7 @@ export default function Settings() {
   const navigate = useNavigate()
   const { github, isGitHubConfigured, autoConfigured, babies, activeBabyId, updateGitHub, saveBaby, deleteBaby, setActiveBaby, enableDiary, setEnableDiary } = useApp()
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [confirmImportState, setConfirmImportState] = useState(null)
   const [githubForm, setGithubForm] = useState(() => {
     const savedToken = settingsStore.get()?.github?.token || ''
     return { token: savedToken, owner: github.owner, repo: github.repo }
@@ -104,7 +106,16 @@ export default function Settings() {
       if (!/^[a-zA-Z0-9._-]+$/.test(owner) || !/^[a-zA-Z0-9._-]+$/.test(repo)) {
         toast.error('owner 或 repo 名稱包含不允許的字元'); return
       }
-      if (!confirm(`確認要連線到 ${owner}/${repo} 嗎？\n設定碼將會把資料同步到此 Repo。`)) return
+      setConfirmImportState({ token, owner, repo })
+    } catch {
+      toast.error('設定碼無效，請確認內容正確')
+    }
+  }
+
+  const handleConfirmImport = async () => {
+    if (!confirmImportState) return
+    const { token, owner, repo } = confirmImportState
+    try {
       const safeConfig = { token, owner, repo }
       setGithubForm(safeConfig)
       setSaving(true)
@@ -114,6 +125,8 @@ export default function Settings() {
       setShowShareCode(false)
     } catch {
       toast.error('設定碼無效，請確認內容正確')
+    } finally {
+      setConfirmImportState(null)
     }
   }
 
@@ -429,6 +442,16 @@ export default function Settings() {
           avatars={AVATARS}
         />
       )}
+
+      <ConfirmModal
+        isOpen={!!confirmImportState}
+        title="確認連線"
+        message={confirmImportState ? `確認要連線到 ${confirmImportState.owner}/${confirmImportState.repo} 嗎？設定碼將會把資料同步到此 Repo。` : ''}
+        confirmLabel="確認連線"
+        confirmStyle="default"
+        onConfirm={handleConfirmImport}
+        onCancel={() => setConfirmImportState(null)}
+      />
     </div>
   )
 }
