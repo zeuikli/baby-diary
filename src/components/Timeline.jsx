@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { Trash2 } from 'lucide-react'
 import EmptyState from './EmptyState'
 
 const TYPE_CONFIG = {
@@ -56,7 +57,8 @@ function getRecordText(type, record) {
   }
 }
 
-export default function Timeline({ today, onEditRecord }) {
+export default function Timeline({ today, onEditRecord, onDeleteRecord }) {
+  const [pendingDelete, setPendingDelete] = useState(null)
   if (!today) return null
 
   // Flatten all events
@@ -91,14 +93,15 @@ export default function Timeline({ today, onEditRecord }) {
         const config = TYPE_CONFIG[type] || TYPE_CONFIG.notes
         const isLast = idx === events.length - 1
 
+        const isPendingDelete = pendingDelete?.record.id === record.id
+
         return (
-          <button
+          <div
             key={record.id || idx}
-            onClick={() => onEditRecord?.(type, record)}
-            className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 active:bg-gray-100 transition-colors text-left touch-manipulation ${!isLast ? 'border-b border-gray-50' : ''}`}
+            className={`flex items-start gap-3 px-4 py-3 transition-colors ${!isLast ? 'border-b border-gray-50' : ''} ${isPendingDelete ? 'bg-red-50' : ''}`}
           >
             {/* Time */}
-            <div className="w-12 flex-shrink-0 text-center">
+            <div className="w-12 flex-shrink-0 text-center pt-0.5">
               <span className="text-xs font-medium text-gray-500">{formatTime(time)}</span>
             </div>
 
@@ -108,27 +111,63 @@ export default function Timeline({ today, onEditRecord }) {
               {!isLast && <div className="w-0.5 flex-1 bg-gray-100 min-h-4 mt-1" />}
             </div>
 
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <span className="text-sm">{config.icon}</span>
-                <span className={`text-xs font-medium ${config.textColor}`}>
-                  {type === 'feeding' ? '喝奶' :
-                   type === 'sleep' ? '睡眠' :
-                   type === 'diaper' ? '尿布' :
-                   type === 'pumping' ? '擠奶' :
-                   type === 'solids' ? '副食品' : '備註'}
-                </span>
-                {type === 'sleep' && !record.end && (
-                  <span className="tag bg-purple-100 text-purple-600 animate-pulse-soft">進行中</span>
-                )}
+            {isPendingDelete ? (
+              /* Confirm delete UI */
+              <div className="flex-1 flex items-center justify-between min-w-0">
+                <span className="text-xs text-red-500 font-medium">確認刪除此記錄？</span>
+                <div className="flex gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => setPendingDelete(null)}
+                    className="text-xs px-3 py-1 rounded-xl bg-gray-100 text-gray-600 touch-manipulation"
+                  >
+                    取消
+                  </button>
+                  <button
+                    onClick={() => {
+                      onDeleteRecord?.(pendingDelete.type, pendingDelete.record.id)
+                      setPendingDelete(null)
+                    }}
+                    className="text-xs px-3 py-1 rounded-xl bg-red-500 text-white touch-manipulation"
+                  >
+                    刪除
+                  </button>
+                </div>
               </div>
-              <p className="text-xs text-gray-500 truncate">{getRecordText(type, record)}</p>
-              {record.notes && (
-                <p className="text-xs text-gray-400 mt-0.5 truncate">{record.notes}</p>
-              )}
-            </div>
-          </button>
+            ) : (
+              /* Normal record row */
+              <>
+                <button
+                  onClick={() => onEditRecord?.(type, record)}
+                  className="flex-1 min-w-0 text-left touch-manipulation hover:opacity-80 active:opacity-60 transition-opacity"
+                >
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-sm">{config.icon}</span>
+                    <span className={`text-xs font-medium ${config.textColor}`}>
+                      {type === 'feeding' ? '喝奶' :
+                       type === 'sleep' ? '睡眠' :
+                       type === 'diaper' ? '尿布' :
+                       type === 'pumping' ? '擠奶' :
+                       type === 'solids' ? '副食品' : '備註'}
+                    </span>
+                    {type === 'sleep' && !record.end && (
+                      <span className="tag bg-purple-100 text-purple-600 animate-pulse-soft">進行中</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 truncate">{getRecordText(type, record)}</p>
+                  {record.notes && (
+                    <p className="text-xs text-gray-400 mt-0.5 truncate">{record.notes}</p>
+                  )}
+                </button>
+                <button
+                  onClick={() => setPendingDelete({ type, record })}
+                  className="flex-shrink-0 p-1.5 text-gray-300 hover:text-red-400 active:text-red-500 transition-colors touch-manipulation"
+                  aria-label="刪除記錄"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </>
+            )}
+          </div>
         )
       })}
     </div>
