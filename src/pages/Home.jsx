@@ -20,7 +20,7 @@ const quickActions = [
 ]
 
 export default function Home() {
-  const { today, loading, activeBaby, babies, selectedDate } = useApp()
+  const { today, loading, activeBaby, babies, selectedDate, deleteRecord } = useApp()
   const navigate = useNavigate()
   const [activeModal, setActiveModal] = useState(null)
   const [editRecord, setEditRecord] = useState(null)
@@ -188,6 +188,7 @@ export default function Home() {
               else if (type === 'pumping') setActiveModal('pumping')
               else if (type === 'solids') setActiveModal('solids')
             }}
+            onDeleteRecord={deleteRecord}
           />
         )}
       </div>
