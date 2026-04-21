@@ -316,7 +316,7 @@ export default function Growth() {
       {/* FAB */}
       <button
         onClick={() => setShowModal(true)}
-        className="fixed bottom-24 right-4 w-14 h-14 bg-orange-400 text-white rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform touch-manipulation"
+        className="fixed bottom-28 right-4 z-50 w-14 h-14 bg-orange-400 text-white rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform touch-manipulation"
       >
         <Plus size={24} />
       </button>
