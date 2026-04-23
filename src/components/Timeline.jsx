@@ -5,7 +5,7 @@ import EmptyState from './EmptyState'
 const TYPE_CONFIG = {
   feeding: { icon: '🍼', color: 'bg-blue-100', textColor: 'text-blue-600', dotColor: 'bg-blue-400' },
   sleep: { icon: '😴', color: 'bg-purple-100', textColor: 'text-purple-600', dotColor: 'bg-purple-400' },
-  diaper: { icon: '🫧', color: 'bg-yellow-100', textColor: 'text-yellow-600', dotColor: 'bg-yellow-400' },
+  diaper: { icon: '🫧', color: 'bg-amber-100', textColor: 'text-amber-600', dotColor: 'bg-amber-400' },
   pumping: { icon: '🤱', color: 'bg-pink-100', textColor: 'text-pink-600', dotColor: 'bg-pink-400' },
   solids: { icon: '🥣', color: 'bg-green-100', textColor: 'text-green-600', dotColor: 'bg-green-400' },
   notes: { icon: '📝', color: 'bg-gray-100', textColor: 'text-gray-600', dotColor: 'bg-gray-400' },

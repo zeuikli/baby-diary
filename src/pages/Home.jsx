@@ -11,12 +11,12 @@ import EmptyState from '../components/EmptyState'
 import { formatDate } from '../services/github'
 
 const quickActions = [
-  { id: 'feeding', icon: '🍼', label: '喝奶', color: 'bg-blue-50 text-blue-500', border: 'border-blue-100' },
-  { id: 'sleep', icon: '😴', label: '睡眠', color: 'bg-purple-50 text-purple-500', border: 'border-purple-100' },
-  { id: 'diaper', icon: '🫧', label: '尿布', color: 'bg-yellow-50 text-yellow-600', border: 'border-yellow-100' },
-  { id: 'pumping', icon: '🤱', label: '擠奶', color: 'bg-pink-50 text-pink-500', border: 'border-pink-100' },
-  { id: 'solids', icon: '🥣', label: '副食品', color: 'bg-green-50 text-green-600', border: 'border-green-100' },
-  { id: 'growth', icon: '📏', label: '成長', color: 'bg-orange-50 text-orange-500', border: 'border-orange-100' },
+  { id: 'feeding', icon: '🍼', label: '喝奶', color: 'bg-white text-blue-500', border: 'border-pink-100' },
+  { id: 'sleep', icon: '😴', label: '睡眠', color: 'bg-white text-purple-500', border: 'border-pink-100' },
+  { id: 'diaper', icon: '🫧', label: '尿布', color: 'bg-white text-amber-500', border: 'border-pink-100' },
+  { id: 'pumping', icon: '🤱', label: '擠奶', color: 'bg-white text-pink-500', border: 'border-pink-100' },
+  { id: 'solids', icon: '🥣', label: '副食品', color: 'bg-white text-green-500', border: 'border-pink-100' },
+  { id: 'growth', icon: '📏', label: '成長', color: 'bg-white text-orange-500', border: 'border-pink-100' },
 ]
 
 export default function Home() {
@@ -131,19 +131,19 @@ export default function Home() {
       {(() => {
         const cards = []
         if (feedingCount > 0) cards.push(
-          <SummaryCard key="feeding" icon="🍼" value={`${feedingTotal}ml`} label={`${feedingCount}次喝奶`} sub={feedingElapsed} color="text-blue-500" bg="bg-blue-50" onClick={() => navigate('/feeding')} />
+          <SummaryCard key="feeding" icon="🍼" value={`${feedingTotal}ml`} label={`${feedingCount}次喝奶`} sub={feedingElapsed} color="text-blue-500" bg="bg-gray-50" onClick={() => navigate('/feeding')} />
         )
         if (today?.sleep?.length > 0) cards.push(
-          <SummaryCard key="sleep" icon="😴" value={`${Math.floor(sleepTotal / 60)}h${Math.floor(sleepTotal % 60)}m`} label={`${today.sleep.length}次睡眠`} color="text-purple-500" bg="bg-purple-50" onClick={() => navigate('/sleep')} />
+          <SummaryCard key="sleep" icon="😴" value={`${Math.floor(sleepTotal / 60)}h${Math.floor(sleepTotal % 60)}m`} label={`${today.sleep.length}次睡眠`} color="text-purple-500" bg="bg-gray-50" onClick={() => navigate('/sleep')} />
         )
         if (diaperCount > 0) cards.push(
-          <SummaryCard key="diaper" icon="🫧" value={`${diaperCount}次`} label="尿布更換" sub={diaperElapsed} color="text-yellow-600" bg="bg-yellow-50" onClick={() => navigate('/diaper')} />
+          <SummaryCard key="diaper" icon="🫧" value={`${diaperCount}次`} label="尿布更換" sub={diaperElapsed} color="text-amber-500" bg="bg-gray-50" onClick={() => navigate('/diaper')} />
         )
         if (pumpingCount > 0) cards.push(
-          <SummaryCard key="pumping" icon="🤱" value={`${pumpingTotal}ml`} label={`${pumpingCount}次擠奶`} color="text-pink-500" bg="bg-pink-50" onClick={() => navigate('/pumping')} />
+          <SummaryCard key="pumping" icon="🤱" value={`${pumpingTotal}ml`} label={`${pumpingCount}次擠奶`} color="text-pink-500" bg="bg-gray-50" onClick={() => navigate('/pumping')} />
         )
         if (solidsCount > 0) cards.push(
-          <SummaryCard key="solids" icon="🥣" value={`${solidsCount}次`} label="副食品" color="text-green-600" bg="bg-green-50" onClick={() => navigate('/solids')} />
+          <SummaryCard key="solids" icon="🥣" value={`${solidsCount}次`} label="副食品" color="text-green-500" bg="bg-gray-50" onClick={() => navigate('/solids')} />
         )
         if (cards.length === 0) return null
         return <div className="grid grid-cols-3 gap-2">{cards}</div>
