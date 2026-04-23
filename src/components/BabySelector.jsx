@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { ChevronDown, Plus } from 'lucide-react'
+import { ChevronDown, Plus, CalendarDays } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useNavigate } from 'react-router-dom'
 import { formatDate } from '../services/github'
@@ -95,8 +95,9 @@ export default function BabySelector() {
         </button>
         <button
           onClick={() => dateInputRef.current?.showPicker?.() || dateInputRef.current?.click()}
-          className="relative text-xs font-medium text-gray-700 min-w-8 text-center touch-manipulation"
+          className="relative flex items-center gap-1 text-xs font-medium text-gray-700 px-1 touch-manipulation"
         >
+          <CalendarDays size={13} className="text-pink-400 shrink-0" />
           {formatDisplayDate(selectedDate)}
           <input
             ref={dateInputRef}
