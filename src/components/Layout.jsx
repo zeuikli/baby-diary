@@ -6,7 +6,7 @@ export default function Layout({ children }) {
   return (
     <div className="h-dvh bg-pink-50 flex flex-col max-w-md mx-auto relative">
       <Header />
-      <main className="flex-1 overflow-y-auto pb-20 safe-bottom">
+      <main className="flex-1 min-h-0 overflow-y-auto bottom-safe">
         {children}
       </main>
       <Navigation />
