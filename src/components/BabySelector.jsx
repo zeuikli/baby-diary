@@ -86,29 +86,34 @@ export default function BabySelector() {
       </div>
 
       {/* Date selector */}
-      <div className="flex items-center gap-1 ml-auto bg-pink-50 rounded-xl px-2 py-1">
+      <div className="relative flex items-center gap-1 ml-auto bg-pink-50 rounded-xl px-2 py-1">
+        {/* input 定在左上角（1×1px），遠離「今」按鈕，避免 touch target 重疊 */}
+        <input
+          id="baby-date-picker"
+          ref={dateInputRef}
+          type="date"
+          value={selectedDate}
+          max={today}
+          onChange={handleDatePick}
+          className="absolute top-0 left-0 w-px h-px opacity-0 pointer-events-none"
+          tabIndex={-1}
+        />
         <button
           onClick={() => handleDateChange(-1)}
           className="w-6 h-6 flex items-center justify-center text-gray-500 active:text-pink-500 touch-manipulation"
         >
           ‹
         </button>
-        <button
-          onClick={() => dateInputRef.current?.showPicker?.() || dateInputRef.current?.click()}
-          className="relative flex items-center gap-1 text-xs font-medium text-gray-700 px-1 touch-manipulation"
+        {/* label 點擊 → 瀏覽器呼叫 input.focus()（不受 pointer-events 限制）
+            → iOS 開啟日期選擇器；同時 showPicker() 供桌機瀏覽器 */}
+        <label
+          htmlFor="baby-date-picker"
+          onClick={() => dateInputRef.current?.showPicker?.()}
+          className="flex items-center gap-1 text-xs font-medium text-gray-700 px-1 cursor-pointer touch-manipulation"
         >
           <CalendarDays size={13} className="text-pink-400 shrink-0" />
           {formatDisplayDate(selectedDate)}
-          <input
-            ref={dateInputRef}
-            type="date"
-            value={selectedDate}
-            max={today}
-            onChange={handleDatePick}
-            className="absolute inset-0 opacity-0 w-full h-full pointer-events-none"
-            tabIndex={-1}
-          />
-        </button>
+        </label>
         <button
           onClick={() => handleDateChange(1)}
           disabled={selectedDate >= today}
