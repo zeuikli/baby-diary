@@ -140,9 +140,9 @@ export default function Stats() {
         const items = []
         if (hasFeeding) items.push(<AvgCard key="f" label="每日奶量" value={`${avg(chartData, 'feeding')}ml`} icon="🍼" color="text-blue-500" />)
         if (hasSleep)   items.push(<AvgCard key="s" label="每日睡眠" value={`${avg(chartData, 'sleep')}h`} icon="😴" color="text-purple-500" />)
-        if (hasDiaper)  items.push(<AvgCard key="d" label="每日尿布" value={`${avg(chartData, 'diaper')}次`} icon="🫧" color="text-yellow-600" />)
+        if (hasDiaper)  items.push(<AvgCard key="d" label="每日尿布" value={`${avg(chartData, 'diaper')}次`} icon="🫧" color="text-amber-500" />)
         if (hasPumping) items.push(<AvgCard key="p" label="每日擠奶" value={`${avg(chartData, 'pump')}ml`} icon="🤱" color="text-pink-500" />)
-        if (hasSolids)  items.push(<AvgCard key="so" label="每日副食品" value={`${avg(chartData, 'solids')}次`} icon="🥣" color="text-green-600" />)
+        if (hasSolids)  items.push(<AvgCard key="so" label="每日副食品" value={`${avg(chartData, 'solids')}次`} icon="🥣" color="text-green-500" />)
         if (items.length === 0) return null
         return (
           <div className="card">
