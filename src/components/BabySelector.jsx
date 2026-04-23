@@ -104,7 +104,7 @@ export default function BabySelector() {
             value={selectedDate}
             max={today}
             onChange={handleDatePick}
-            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+            className="absolute inset-0 opacity-0 w-full h-full pointer-events-none"
             tabIndex={-1}
           />
         </button>
