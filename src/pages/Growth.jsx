@@ -267,8 +267,8 @@ export default function Growth() {
                 <Line
                   type="monotone" dataKey="baby" name={activeTabConfig.label}
                   stroke={activeTabConfig.color} strokeWidth={2.5}
-                  dot={{ fill: activeTabConfig.color, r: 4 }}
-                  activeDot={{ r: 6 }}
+                  dot={false}
+                  activeDot={{ r: 5, fill: activeTabConfig.color }}
                   connectNulls
                 />
               </LineChart>
