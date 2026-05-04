@@ -132,7 +132,7 @@ export function AppProvider({ children }) {
     }
 
     const activeBabyObj = babies.find(b => b.id === activeBabyId)
-    const needsUnlock = activeBabyObj?.passwordHash && !unlockedProfiles.has(activeBabyId)
+    const needsUnlock = activeBabyObj?.passwordHash && !unlockedProfiles.has(activeBabyId, activeBabyObj?.passwordHash)
 
     dispatch({
       type: 'INIT',
@@ -166,6 +166,13 @@ export function AppProvider({ children }) {
         const merged = Array.from(map.values())
         dispatch({ type: 'SET_BABIES', payload: merged })
         settingsStore.update({ babies: merged })
+        // Re-lock if the active baby's password changed on another device
+        const syncedActiveBaby = merged.find(b => b.id === activeBabyId)
+        if (syncedActiveBaby?.passwordHash && !unlockedProfiles.has(syncedActiveBaby.id, syncedActiveBaby.passwordHash)) {
+          dispatch({ type: 'SET_ACTIVE_BABY', payload: null })
+          dispatch({ type: 'SET_PENDING_UNLOCK', payload: syncedActiveBaby.id })
+          settingsStore.update({ activeBabyId: null })
+        }
         if (!localActiveId && merged.length > 0) {
           dispatch({ type: 'SET_ACTIVE_BABY', payload: merged[0].id })
           settingsStore.update({ activeBabyId: merged[0].id })
@@ -248,7 +255,7 @@ export function AppProvider({ children }) {
 
   const setActiveBaby = useCallback((babyId) => {
     const baby = state.babies.find(b => b.id === babyId)
-    if (baby?.passwordHash && !unlockedProfiles.has(babyId)) {
+    if (baby?.passwordHash && !unlockedProfiles.has(babyId, baby?.passwordHash)) {
       dispatch({ type: 'SET_PENDING_UNLOCK', payload: babyId })
       return
     }
@@ -256,8 +263,8 @@ export function AppProvider({ children }) {
     settingsStore.update({ activeBabyId: babyId })
   }, [state.babies])
 
-  const unlockBaby = useCallback((babyId) => {
-    unlockedProfiles.add(babyId)
+  const unlockBaby = useCallback((babyId, passwordHash) => {
+    unlockedProfiles.add(babyId, passwordHash)
     dispatch({ type: 'SET_ACTIVE_BABY', payload: babyId })
     dispatch({ type: 'SET_PENDING_UNLOCK', payload: null })
     settingsStore.update({ activeBabyId: babyId })
@@ -275,7 +282,7 @@ export function AppProvider({ children }) {
     if (state.activeBabyId === babyId) {
       const nextBaby = updatedBabies[0] ?? null
       const nextId = nextBaby?.id ?? null
-      if (nextBaby?.passwordHash && !unlockedProfiles.has(nextId)) {
+      if (nextBaby?.passwordHash && !unlockedProfiles.has(nextId, nextBaby?.passwordHash)) {
         dispatch({ type: 'SET_ACTIVE_BABY', payload: null })
         dispatch({ type: 'SET_PENDING_UNLOCK', payload: nextId })
         settingsStore.update({ activeBabyId: null })

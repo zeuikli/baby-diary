@@ -476,7 +476,7 @@ function BabyModal({ editBaby, onSave, onClose, avatars }) {
       try {
         finalForm.passwordHash = await hashPassword(newPassword)
         // New password means this device is already "unlocked"
-        unlockedProfiles.add(finalForm.id)
+        unlockedProfiles.add(finalForm.id, finalForm.passwordHash)
       } catch {
         toast.error('密碼設定失敗')
         return

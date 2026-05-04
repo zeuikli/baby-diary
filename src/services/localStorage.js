@@ -58,12 +58,18 @@ export const settings = {
 
 export const unlockedProfiles = {
   get() { return ls.get('unlocked_profiles', []) },
-  add(babyId) {
-    const list = this.get()
-    if (!list.includes(babyId)) ls.set('unlocked_profiles', [...list, babyId])
+  add(babyId, passwordHash) {
+    const list = this.get().filter(e => (typeof e === 'object' ? e.id : e) !== babyId)
+    ls.set('unlocked_profiles', [...list, { id: babyId, hash: passwordHash || '' }])
   },
-  has(babyId) { return this.get().includes(babyId) },
-  remove(babyId) { ls.set('unlocked_profiles', this.get().filter(id => id !== babyId)) },
+  // Returns true only when the stored hash matches the current passwordHash.
+  // Old string-format entries (pre-migration) are always treated as invalid.
+  has(babyId, passwordHash) {
+    return this.get().some(e => typeof e === 'object' && e.id === babyId && e.hash === (passwordHash || ''))
+  },
+  remove(babyId) {
+    ls.set('unlocked_profiles', this.get().filter(e => (typeof e === 'object' ? e.id : e) !== babyId))
+  },
 }
 
 function deepMerge(target, source) {

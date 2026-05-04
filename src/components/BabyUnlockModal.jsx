@@ -27,7 +27,7 @@ export default function BabyUnlockModal() {
     try {
       const ok = await verifyPassword(password, baby.passwordHash)
       if (ok) {
-        unlockBaby(baby.id)
+        unlockBaby(baby.id, baby.passwordHash)
         toast.success(`已解鎖 ${baby.name} 的資料 🔓`)
       } else {
         toast.error('密碼錯誤，請再試一次')
