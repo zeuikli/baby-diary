@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Save, Plus, Trash2, Github, Database, Bell, Info, ChevronRight, Eye, EyeOff, FileUp, FileDown, Copy, ClipboardPaste, Check } from 'lucide-react'
+import { Save, Plus, Trash2, Github, Database, Bell, Info, ChevronRight, Eye, EyeOff, FileUp, FileDown, Copy, ClipboardPaste, Check, Lock, Unlock } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { generateId } from '../services/github'
-import { settings as settingsStore } from '../services/localStorage'
+import { settings as settingsStore, unlockedProfiles } from '../services/localStorage'
+import { hashPassword } from '../utils/crypto'
 import Modal from '../components/Modal'
 import toast from 'react-hot-toast'
 
@@ -452,16 +453,42 @@ function BabyModal({ editBaby, onSave, onClose, avatars }) {
     gender: editBaby?.gender || '',
     avatar: editBaby?.avatar || '👶',
     notes: editBaby?.notes || '',
+    passwordHash: editBaby?.passwordHash || '',
   })
   const [saving, setSaving] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  // 'keep' = unchanged | 'set' = setting new password | 'remove' = removing password
+  const [passwordAction, setPasswordAction] = useState('keep')
+
+  const hasPassword = !!editBaby?.passwordHash
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const handleSave = async () => {
     if (!form.name.trim()) { toast.error('請輸入寶寶名稱'); return }
+
+    let finalForm = { ...form }
+
+    if (passwordAction === 'set') {
+      if (newPassword.length < 4) { toast.error('密碼至少需要 4 個字元'); return }
+      if (!window.crypto?.subtle) { toast.error('此裝置不支援加密功能'); return }
+      try {
+        finalForm.passwordHash = await hashPassword(newPassword)
+        // New password means this device is already "unlocked"
+        unlockedProfiles.add(finalForm.id)
+      } catch {
+        toast.error('密碼設定失敗')
+        return
+      }
+    } else if (passwordAction === 'remove') {
+      finalForm.passwordHash = ''
+      unlockedProfiles.remove(finalForm.id)
+    }
+
     setSaving(true)
     try {
-      await onSave(form)
+      await onSave(finalForm)
     } finally {
       setSaving(false)
     }
@@ -516,6 +543,86 @@ function BabyModal({ editBaby, onSave, onClose, avatars }) {
         <div>
           <label className="form-label">備註</label>
           <textarea placeholder="過敏記錄、特殊注意..." value={form.notes} onChange={e => set('notes', e.target.value)} className="form-input resize-none" rows={2} />
+        </div>
+
+        {/* Password protection */}
+        <div className="border-t border-gray-100 pt-4">
+          <div className="flex items-center gap-2 mb-3">
+            {hasPassword && passwordAction !== 'remove'
+              ? <Lock size={14} className="text-pink-400" />
+              : <Unlock size={14} className="text-gray-400" />
+            }
+            <span className="text-sm font-medium text-gray-700">保護密碼</span>
+            {hasPassword && passwordAction === 'keep' && (
+              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full ml-1">已設定</span>
+            )}
+          </div>
+
+          {hasPassword && passwordAction === 'keep' && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPasswordAction('set')}
+                className="flex-1 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors touch-manipulation"
+              >
+                更改密碼
+              </button>
+              <button
+                onClick={() => setPasswordAction('remove')}
+                className="flex-1 py-2 rounded-xl border border-red-200 text-sm text-red-500 hover:bg-red-50 transition-colors touch-manipulation"
+              >
+                移除保護
+              </button>
+            </div>
+          )}
+
+          {passwordAction === 'remove' && (
+            <div className="p-3 bg-red-50 rounded-xl space-y-2">
+              <p className="text-sm text-red-600">確定要移除密碼保護嗎？儲存後任何人都可以查看此寶寶的資料。</p>
+              <button
+                onClick={() => setPasswordAction('keep')}
+                className="w-full py-1.5 rounded-lg border border-red-200 text-xs text-red-500 hover:bg-red-100 transition-colors touch-manipulation"
+              >
+                取消移除
+              </button>
+            </div>
+          )}
+
+          {(!hasPassword || passwordAction === 'set') && passwordAction !== 'remove' && (
+            <div className="space-y-1.5">
+              <div className="relative">
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  placeholder={hasPassword ? '輸入新密碼（至少 4 個字元）' : '設定密碼保護（留空表示不保護）'}
+                  value={newPassword}
+                  onChange={e => {
+                    setNewPassword(e.target.value)
+                    if (!hasPassword) setPasswordAction(e.target.value ? 'set' : 'keep')
+                  }}
+                  className="form-input pr-10"
+                  autoComplete="new-password"
+                />
+                <button
+                  onClick={() => setShowNewPassword(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 touch-manipulation"
+                >
+                  {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              <p className="text-xs text-gray-400">
+                {passwordAction === 'set'
+                  ? '設定後，切換到此寶寶時需輸入密碼（本瀏覽器記住後免重複輸入）'
+                  : '留空表示不設密碼保護'}
+              </p>
+              {hasPassword && passwordAction === 'set' && (
+                <button
+                  onClick={() => { setPasswordAction('keep'); setNewPassword('') }}
+                  className="text-xs text-gray-400 underline touch-manipulation"
+                >
+                  取消更改
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <button onClick={handleSave} disabled={saving} className="w-full btn-primary py-3">

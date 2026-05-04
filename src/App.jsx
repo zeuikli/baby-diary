@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AppProvider } from './context/AppContext'
 import Layout from './components/Layout'
+import BabyUnlockModal from './components/BabyUnlockModal'
 
 const Home = lazy(() => import('./pages/Home'))
 const Feeding = lazy(() => import('./pages/Feeding'))
@@ -42,6 +43,7 @@ export default function App() {
           },
         }}
       />
+      <BabyUnlockModal />
       <Layout>
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
