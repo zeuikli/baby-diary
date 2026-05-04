@@ -14,7 +14,7 @@ const quickActions = [
   { id: 'feeding', icon: '🍼', label: '喝奶', color: 'bg-white text-blue-500', border: 'border-pink-100' },
   { id: 'sleep', icon: '😴', label: '睡眠', color: 'bg-white text-purple-500', border: 'border-pink-100' },
   { id: 'diaper', icon: '🫧', label: '尿布', color: 'bg-white text-amber-500', border: 'border-pink-100' },
-  { id: 'pumping', icon: '🤱', label: '擠奶', color: 'bg-white text-pink-500', border: 'border-pink-100' },
+  { id: 'pumping', icon: '✨', label: '其他', color: 'bg-white text-violet-500', border: 'border-violet-100' },
   { id: 'solids', icon: '🥣', label: '副食品', color: 'bg-white text-green-500', border: 'border-pink-100' },
   { id: 'growth', icon: '📏', label: '成長', color: 'bg-white text-orange-500', border: 'border-pink-100' },
 ]
@@ -62,7 +62,6 @@ export default function Home() {
     return s
   }, 0) || 0
   const diaperCount = today?.diaper?.length || 0
-  const pumpingTotal = today?.pumping?.reduce((s, r) => s + (r.amount || 0), 0) || 0
   const pumpingCount = today?.pumping?.length || 0
   const solidsCount = today?.solids?.length || 0
   const activeSleep = today?.sleep?.find(s => !s.end)
@@ -140,7 +139,7 @@ export default function Home() {
           <SummaryCard key="diaper" icon="🫧" value={`${diaperCount}次`} label="尿布更換" sub={diaperElapsed} color="text-amber-500" bg="bg-gray-50" onClick={() => navigate('/diaper')} />
         )
         if (pumpingCount > 0) cards.push(
-          <SummaryCard key="pumping" icon="🤱" value={`${pumpingTotal}ml`} label={`${pumpingCount}次擠奶`} color="text-pink-500" bg="bg-gray-50" onClick={() => navigate('/pumping')} />
+          <SummaryCard key="pumping" icon="✨" value={`${pumpingCount}次`} label="其他記錄" color="text-violet-500" bg="bg-gray-50" onClick={() => navigate('/other')} />
         )
         if (solidsCount > 0) cards.push(
           <SummaryCard key="solids" icon="🥣" value={`${solidsCount}次`} label="副食品" color="text-green-500" bg="bg-gray-50" onClick={() => navigate('/solids')} />
@@ -185,7 +184,7 @@ export default function Home() {
               if (type === 'feeding') setActiveModal('feeding')
               else if (type === 'sleep') setActiveModal('sleep')
               else if (type === 'diaper') setActiveModal('diaper')
-              else if (type === 'pumping') setActiveModal('pumping')
+              else if (type === 'pumping') { setActiveModal('pumping') }
               else if (type === 'solids') setActiveModal('solids')
             }}
             onDeleteRecord={deleteRecord}

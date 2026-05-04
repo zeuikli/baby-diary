@@ -14,15 +14,12 @@ const typeConfig = {
 export default function Diaper() {
   const { today, deleteRecord, loading } = useApp()
   const [showModal, setShowModal] = useState(false)
-  const [showPumpModal, setShowPumpModal] = useState(false)
   const [editRecord, setEditRecord] = useState(null)
 
   const records = today?.diaper || []
-  const pumpRecords = today?.pumping || []
 
   const wetCount = records.filter(r => r.diaperType === 'wet' || r.diaperType === 'mixed').length
   const dirtyCount = records.filter(r => r.diaperType === 'dirty' || r.diaperType === 'mixed').length
-  const pumpTotal = pumpRecords.reduce((s, r) => s + (r.amount || 0), 0)
 
   const handleDelete = (type, id) => {
     if (confirm('確定刪除此記錄？')) {
@@ -98,51 +95,6 @@ export default function Diaper() {
         )}
       </div>
 
-      {/* Pumping Records */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">擠奶記錄</h2>
-          <button onClick={() => { setEditRecord(null); setShowPumpModal(true) }} className="flex items-center gap-1 text-xs text-pink-500 font-medium px-2 py-1 bg-pink-50 rounded-lg touch-manipulation">
-            <Plus size={14} /> 新增
-          </button>
-        </div>
-
-        {pumpRecords.length > 0 && (
-          <div className="card p-0 overflow-hidden">
-            {pumpRecords.map((record, idx) => (
-              <div key={record.id} className={`flex items-center gap-3 px-4 py-3 ${idx < pumpRecords.length - 1 ? 'border-b border-gray-50' : ''}`}>
-                <div className="w-10 h-10 bg-pink-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <span className="text-xl">🤱</span>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-800">{record.time}</span>
-                    {record.amount && <span className="tag bg-pink-100 text-pink-600">{record.amount}ml</span>}
-                    {record.side && <span className="tag bg-gray-100 text-gray-600">{record.side === 'both' ? '雙側' : record.side === 'left' ? '左側' : '右側'}</span>}
-                  </div>
-                  {record.duration && <p className="text-xs text-gray-400 mt-0.5">{record.duration}分鐘</p>}
-                </div>
-                <div className="flex gap-1">
-                  <button onClick={() => { setEditRecord(record); setShowPumpModal(true) }} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 touch-manipulation">
-                    <Edit2 size={15} />
-                  </button>
-                  <button onClick={() => handleDelete('pumping', record.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-400 touch-manipulation">
-                    <Trash2 size={15} />
-                  </button>
-                </div>
-              </div>
-            ))}
-            {pumpTotal > 0 && (
-              <div className="px-4 py-2 bg-pink-50 text-sm text-pink-600 font-medium">
-                今日擠奶合計：{pumpTotal}ml
-              </div>
-            )}
-          </div>
-        )}
-
-        {pumpRecords.length === 0 && <p className="text-xs text-gray-400 text-center py-3">尚無擠奶記錄</p>}
-      </div>
-
       {/* FAB */}
       <button
         onClick={() => { setEditRecord(null); setShowModal(true) }}
@@ -153,9 +105,6 @@ export default function Diaper() {
 
       {showModal && (
         <QuickDiaperModal type="diaper" editRecord={editRecord} onClose={() => { setShowModal(false); setEditRecord(null) }} />
-      )}
-      {showPumpModal && (
-        <QuickDiaperModal type="pumping" editRecord={editRecord} onClose={() => { setShowPumpModal(false); setEditRecord(null) }} />
       )}
     </div>
   )

@@ -6,7 +6,7 @@ const TYPE_CONFIG = {
   feeding: { icon: '🍼', color: 'bg-blue-100', textColor: 'text-blue-600', dotColor: 'bg-blue-400' },
   sleep: { icon: '😴', color: 'bg-purple-100', textColor: 'text-purple-600', dotColor: 'bg-purple-400' },
   diaper: { icon: '🫧', color: 'bg-amber-100', textColor: 'text-amber-600', dotColor: 'bg-amber-400' },
-  pumping: { icon: '🤱', color: 'bg-pink-100', textColor: 'text-pink-600', dotColor: 'bg-pink-400' },
+  pumping: { icon: '✨', color: 'bg-violet-100', textColor: 'text-violet-600', dotColor: 'bg-violet-400' },
   solids: { icon: '🥣', color: 'bg-green-100', textColor: 'text-green-600', dotColor: 'bg-green-400' },
   notes: { icon: '📝', color: 'bg-gray-100', textColor: 'text-gray-600', dotColor: 'bg-gray-400' },
 }
@@ -46,10 +46,7 @@ function getRecordText(type, record) {
         record.color ? record.color : null,
       ].filter(Boolean).join(' · ')
     case 'pumping':
-      return [
-        record.amount ? `${record.amount}ml` : null,
-        record.side === 'both' ? '雙側' : record.side === 'left' ? '左側' : '右側',
-      ].filter(Boolean).join(' · ')
+      return record.title || record.notes || '其他事件'
     case 'solids':
       return [record.food, record.amount ? `${record.amount}ml` : null, record.reaction].filter(Boolean).join(' · ')
     default:
@@ -146,7 +143,7 @@ export default function Timeline({ today, onEditRecord, onDeleteRecord }) {
                       {type === 'feeding' ? '喝奶' :
                        type === 'sleep' ? '睡眠' :
                        type === 'diaper' ? '尿布' :
-                       type === 'pumping' ? '擠奶' :
+                       type === 'pumping' ? '其他' :
                        type === 'solids' ? '副食品' : '備註'}
                     </span>
                     {type === 'sleep' && !record.end && (

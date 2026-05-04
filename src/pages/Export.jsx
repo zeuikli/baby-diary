@@ -22,9 +22,9 @@ const EXPORT_TYPES = [
   { id: 'diaper',   label: '尿布',   icon: '🫧',
     cols: ['日期','時間','類型','顏色','形狀','多寡','備註'],
     row: (date, r) => [date, r.time||'', zh(DIAPER_TYPE_ZH, r.diaperType), r.color||'', r.consistency||'', r.amount||'', r.notes||''] },
-  { id: 'pumping',  label: '擠奶',   icon: '🤱',
-    cols: ['日期','時間','側邊','奶量(ml)','時長(分鐘)','備註'],
-    row: (date, r) => [date, r.time||'', zh(SIDE_ZH, r.side), r.amount??'', r.duration??'', r.notes||''] },
+  { id: 'pumping',  label: '其他',   icon: '✨',
+    cols: ['日期','時間','事件名稱','備註'],
+    row: (date, r) => [date, r.time||'', r.title||'', r.notes||''] },
   { id: 'solids',   label: '副食品', icon: '🥣',
     cols: ['日期','時間','食物','食量(ml)','反應','備註'],
     row: (date, r) => [date, r.time||'', r.food||'', r.amount??'', r.reaction||'', r.notes||''] },
@@ -180,7 +180,7 @@ export default function Export() {
         diapers.forEach(r => allRows.push(['尿布', day.date, r.time||'', '', '', zh(DIAPER_TYPE_ZH, r.diaperType), '', '', '', '', '', '', r.color||'', r.consistency||'', r.amount||'', '', '', '', r.notes||'']))
         // pumping
         const pumpings = Array.isArray(day.pumping) ? day.pumping.filter(Boolean) : []
-        pumpings.forEach(r => allRows.push(['擠奶', day.date, r.time||'', '', '', '', r.amount??'', r.duration??'', zh(SIDE_ZH, r.side), '', '', '', '', '', '', '', '', '', r.notes||'']))
+        pumpings.forEach(r => allRows.push(['其他', day.date, r.time||'', '', '', '', '', '', '', '', '', '', '', '', '', r.title||'', '', '', r.notes||'']))
         // solids
         const solids = Array.isArray(day.solids) ? day.solids.filter(Boolean) : []
         solids.forEach(r => allRows.push(['副食品', day.date, r.time||'', '', '', '', '', '', '', r.food||'', r.amount??'', r.reaction||'', '', '', '', '', '', '', r.notes||'']))
