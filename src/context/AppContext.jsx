@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useReducer, useCallback } from 'react'
 import { githubService, formatDate, createEmptyDay, generateId } from '../services/github'
-import { settings as settingsStore, ls } from '../services/localStorage'
+import { settings as settingsStore, ls, unlockedProfiles } from '../services/localStorage'
 import toast from 'react-hot-toast'
 
 const AppContext = createContext(null)
@@ -28,6 +28,9 @@ const initialState = {
 
   // Offline queue
   offlineQueue: [],
+
+  // Profile lock
+  pendingUnlockBabyId: null,
 }
 
 function reducer(state, action) {
@@ -70,6 +73,8 @@ function reducer(state, action) {
     }
     case 'UPDATE_TODAY':
       return { ...state, today: action.payload }
+    case 'SET_PENDING_UNLOCK':
+      return { ...state, pendingUnlockBabyId: action.payload }
     default:
       return state
   }
@@ -126,6 +131,9 @@ export function AppProvider({ children }) {
       githubService.init({ token, ...github })
     }
 
+    const activeBabyObj = babies.find(b => b.id === activeBabyId)
+    const needsUnlock = activeBabyObj?.passwordHash && !unlockedProfiles.has(activeBabyId)
+
     dispatch({
       type: 'INIT',
       payload: {
@@ -133,8 +141,10 @@ export function AppProvider({ children }) {
         isGitHubConfigured: !!(token && github.owner && github.repo),
         enableDiary: saved.enableDiary || false,
         babies,
-        activeBabyId,
+        // When startup baby needs unlock, keep activeBabyId null until password is entered
+        activeBabyId: needsUnlock ? null : activeBabyId,
         autoConfigured: false,
+        pendingUnlockBabyId: needsUnlock ? activeBabyId : null,
       }
     })
 
@@ -237,18 +247,42 @@ export function AppProvider({ children }) {
   }, [state.today, saveRecord])
 
   const setActiveBaby = useCallback((babyId) => {
+    const baby = state.babies.find(b => b.id === babyId)
+    if (baby?.passwordHash && !unlockedProfiles.has(babyId)) {
+      dispatch({ type: 'SET_PENDING_UNLOCK', payload: babyId })
+      return
+    }
     dispatch({ type: 'SET_ACTIVE_BABY', payload: babyId })
     settingsStore.update({ activeBabyId: babyId })
+  }, [state.babies])
+
+  const unlockBaby = useCallback((babyId) => {
+    unlockedProfiles.add(babyId)
+    dispatch({ type: 'SET_ACTIVE_BABY', payload: babyId })
+    dispatch({ type: 'SET_PENDING_UNLOCK', payload: null })
+    settingsStore.update({ activeBabyId: babyId })
+  }, [])
+
+  const cancelUnlock = useCallback(() => {
+    dispatch({ type: 'SET_PENDING_UNLOCK', payload: null })
   }, [])
 
   const deleteBaby = useCallback(async (babyId) => {
     const updatedBabies = state.babies.filter(b => b.id !== babyId)
     dispatch({ type: 'SET_BABIES', payload: updatedBabies })
     settingsStore.update({ babies: updatedBabies })
+    unlockedProfiles.remove(babyId)
     if (state.activeBabyId === babyId) {
-      const nextId = updatedBabies[0]?.id ?? null
-      dispatch({ type: 'SET_ACTIVE_BABY', payload: nextId })
-      settingsStore.update({ activeBabyId: nextId })
+      const nextBaby = updatedBabies[0] ?? null
+      const nextId = nextBaby?.id ?? null
+      if (nextBaby?.passwordHash && !unlockedProfiles.has(nextId)) {
+        dispatch({ type: 'SET_ACTIVE_BABY', payload: null })
+        dispatch({ type: 'SET_PENDING_UNLOCK', payload: nextId })
+        settingsStore.update({ activeBabyId: null })
+      } else {
+        dispatch({ type: 'SET_ACTIVE_BABY', payload: nextId })
+        settingsStore.update({ activeBabyId: nextId })
+      }
     }
     if (githubService.isConfigured) {
       try { await githubService.deleteBaby(babyId) } catch (e) {
@@ -340,6 +374,8 @@ export function AppProvider({ children }) {
     updateRecord,
     deleteRecord,
     setActiveBaby,
+    unlockBaby,
+    cancelUnlock,
     saveBaby,
     deleteBaby,
     updateGitHub,

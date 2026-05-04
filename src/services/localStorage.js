@@ -56,6 +56,16 @@ export const settings = {
   }
 }
 
+export const unlockedProfiles = {
+  get() { return ls.get('unlocked_profiles', []) },
+  add(babyId) {
+    const list = this.get()
+    if (!list.includes(babyId)) ls.set('unlocked_profiles', [...list, babyId])
+  },
+  has(babyId) { return this.get().includes(babyId) },
+  remove(babyId) { ls.set('unlocked_profiles', this.get().filter(id => id !== babyId)) },
+}
+
 function deepMerge(target, source) {
   const result = { ...target }
   for (const key in source) {

@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react'
-import { ChevronDown, Plus, CalendarDays } from 'lucide-react'
+import { ChevronDown, Plus, CalendarDays, Lock } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useNavigate } from 'react-router-dom'
 import { formatDate } from '../services/github'
+import { unlockedProfiles } from '../services/localStorage'
 
 export default function BabySelector() {
   const { babies, activeBaby, activeBabyId, setActiveBaby, selectedDate, setSelectedDate } = useApp()
@@ -71,16 +72,20 @@ export default function BabySelector() {
 
         {open && babies.length > 1 && (
           <div className="absolute top-full left-0 mt-1 bg-white rounded-2xl shadow-lg border border-pink-100 py-2 min-w-32 z-50 animate-bounce-in">
-            {babies.map(baby => (
-              <button
-                key={baby.id}
-                onClick={() => { setActiveBaby(baby.id); setOpen(false) }}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-pink-50 transition-colors ${baby.id === activeBabyId ? 'text-pink-500 font-medium' : 'text-gray-700'}`}
-              >
-                <span className="text-lg">{baby.avatar || '👶'}</span>
-                {baby.name}
-              </button>
-            ))}
+            {babies.map(baby => {
+              const isLocked = baby.passwordHash && !unlockedProfiles.has(baby.id)
+              return (
+                <button
+                  key={baby.id}
+                  onClick={() => { setActiveBaby(baby.id); setOpen(false) }}
+                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-pink-50 transition-colors ${baby.id === activeBabyId ? 'text-pink-500 font-medium' : 'text-gray-700'}`}
+                >
+                  <span className="text-lg">{baby.avatar || '👶'}</span>
+                  <span className="flex-1 text-left">{baby.name}</span>
+                  {isLocked && <Lock size={12} className="text-gray-400 shrink-0" />}
+                </button>
+              )
+            })}
           </div>
         )}
       </div>
