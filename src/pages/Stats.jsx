@@ -71,7 +71,6 @@ export default function Stats() {
     diaper: (r.diaper || []).length,
     wet: (r.diaper || []).filter(d => d.diaperType === 'wet' || d.diaperType === 'mixed').length,
     dirty: (r.diaper || []).filter(d => d.diaperType === 'dirty' || d.diaperType === 'mixed').length,
-    pump: (r.pumping || []).reduce((s, p) => s + (p.amount || 0), 0),
     pumpCount: (r.pumping || []).length,
     solids: (r.solids || []).length,
   }))
@@ -88,7 +87,7 @@ export default function Stats() {
   if (hasFeeding) tabs.push({ id: 'feeding', label: '喝奶', icon: '🍼' })
   if (hasSleep)   tabs.push({ id: 'sleep',   label: '睡眠', icon: '😴' })
   if (hasDiaper)  tabs.push({ id: 'diaper',  label: '尿布', icon: '🫧' })
-  if (hasPumping) tabs.push({ id: 'pumping', label: '擠奶', icon: '🤱' })
+  if (hasPumping) tabs.push({ id: 'pumping', label: '其他', icon: '✨' })
   if (hasSolids)  tabs.push({ id: 'solids',  label: '副食品', icon: '🥣' })
 
   // Auto-select first available tab
@@ -124,7 +123,7 @@ export default function Stats() {
         if (today.feedCount > 0) items.push(<MiniStat key="f" icon="🍼" value={`${today.feeding}ml`} label="奶量" />)
         if (today.sleepCount > 0 || today.sleep > 0) items.push(<MiniStat key="s" icon="😴" value={`${today.sleep}h`} label="睡眠" />)
         if (today.diaper > 0) items.push(<MiniStat key="d" icon="🫧" value={`${today.diaper}次`} label="尿布" />)
-        if (today.pumpCount > 0) items.push(<MiniStat key="p" icon="🤱" value={`${today.pump}ml`} label="擠奶" />)
+        if (today.pumpCount > 0) items.push(<MiniStat key="p" icon="✨" value={`${today.pumpCount}次`} label="其他" />)
         if (today.solids > 0) items.push(<MiniStat key="so" icon="🥣" value={`${today.solids}次`} label="副食品" />)
         if (items.length === 0) return null
         return (
@@ -141,7 +140,7 @@ export default function Stats() {
         if (hasFeeding) items.push(<AvgCard key="f" label="每日奶量" value={`${avg(chartData, 'feeding')}ml`} icon="🍼" color="text-blue-500" />)
         if (hasSleep)   items.push(<AvgCard key="s" label="每日睡眠" value={`${avg(chartData, 'sleep')}h`} icon="😴" color="text-purple-500" />)
         if (hasDiaper)  items.push(<AvgCard key="d" label="每日尿布" value={`${avg(chartData, 'diaper')}次`} icon="🫧" color="text-amber-500" />)
-        if (hasPumping) items.push(<AvgCard key="p" label="每日擠奶" value={`${avg(chartData, 'pump')}ml`} icon="🤱" color="text-pink-500" />)
+        if (hasPumping) items.push(<AvgCard key="p" label="每日其他" value={`${avg(chartData, 'pumpCount')}次`} icon="✨" color="text-violet-500" />)
         if (hasSolids)  items.push(<AvgCard key="so" label="每日副食品" value={`${avg(chartData, 'solids')}次`} icon="🥣" color="text-green-500" />)
         if (items.length === 0) return null
         return (
@@ -229,14 +228,14 @@ export default function Stats() {
 
           {currentTab === 'pumping' && (
             <>
-              <p className="text-xs text-gray-400 mb-2">每日擠奶量 (ml)</p>
+              <p className="text-xs text-gray-400 mb-2">每日其他記錄次數</p>
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                   <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} />
-                  <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} />
-                  <Tooltip contentStyle={{ borderRadius: '12px', fontSize: 12 }} formatter={(v) => [`${v}ml`, '擠奶']} />
-                  <Bar dataKey="pump" fill="#f472b6" radius={[4, 4, 0, 0]} />
+                  <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} allowDecimals={false} />
+                  <Tooltip contentStyle={{ borderRadius: '12px', fontSize: 12 }} formatter={(v) => [`${v}次`, '其他']} />
+                  <Bar dataKey="pumpCount" fill="#a78bfa" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </>

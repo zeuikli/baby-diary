@@ -168,13 +168,13 @@ const RECORD_TYPES = {
     hint: '類型：尿尿 / 便便 / 混合 / 乾淨｜顏色：黃色 / 綠色 / 黃褐色 / 紅色 / 棕色 / 黑色 / 灰白｜形狀：顆粒 / 硬 / 正常 / 鬆軟 / 黏稠 / 稀｜多寡：少量 / 中等 / 量多',
   },
   pumping: {
-    label: '擠奶記錄', icon: '🤱',
+    label: '其他記錄', icon: '✨',
     sample: [
-      ['日期','時間','側邊','奶量(ml)','時長(分鐘)','備註'],
-      ['2026-04-11','06:00','雙側','100','15',''],
-      ['2026-04-11','12:00','左側','80','10',''],
+      ['日期','時間','事件名稱','備註'],
+      ['2026-04-11','09:00','看醫生','打疫苗'],
+      ['2026-04-11','15:00','洗澡',''],
     ],
-    hint: '側邊：左側 / 右側 / 雙側',
+    hint: '事件名稱可自由填寫，例如：看醫生、洗澡、外出、量體溫',
   },
   solids: {
     label: '副食品紀錄', icon: '🥣',
@@ -218,7 +218,7 @@ function rowToDiaper(row) {
   return { id: generateId(), time: getCol(row,'time','時間'), diaperType: DIAPER_TYPE_MAP[(getCol(row,'type','類型','diaper_type')||'wet').toLowerCase()]||'wet', color: getCol(row,'color','顏色')||'', consistency: getCol(row,'consistency','形狀')||'', amount: getCol(row,'amount','多寡')||'', notes: getCol(row,'notes','備註') }
 }
 function rowToPumping(row) {
-  return { id: generateId(), time: getCol(row,'time','時間'), side: SIDE_MAP[(getCol(row,'side','側邊')||'both').toLowerCase()]||'both', amount: toNum(getCol(row,'amount_ml','amount','奶量','奶量(ml)')), duration: toNum(getCol(row,'duration_min','duration','時長','時長(分鐘)')), notes: getCol(row,'notes','備註') }
+  return { id: generateId(), time: getCol(row,'time','時間'), title: getCol(row,'title','事件名稱'), notes: getCol(row,'notes','備註') }
 }
 function rowToSolids(row) {
   return { id: generateId(), time: getCol(row,'time','時間'), food: getCol(row,'food','食物'), amount: toNum(getCol(row,'amount_ml','amount','食量','食量(ml)')), reaction: getCol(row,'reaction','反應'), notes: getCol(row,'notes','備註') }
@@ -236,7 +236,7 @@ function previewLabel(type, record) {
   if (type === 'feeding') return `${record.time}  ${FEED_TYPE_ZH[record.feedType]||record.feedType}${record.amount ? '  '+record.amount+'ml' : ''}${record.duration ? '  '+record.duration+'分' : ''}`
   if (type === 'sleep')   return `${record.start} → ${record.end || '?'}`
   if (type === 'diaper')  return `${record.time}  ${DIAPER_TYPE_ZH[record.diaperType]||record.diaperType}${record.color ? '  '+record.color : ''}${record.consistency ? '  '+record.consistency : ''}${record.amount ? '  '+record.amount : ''}`
-  if (type === 'pumping') return `${record.time}  ${SIDE_ZH[record.side]||record.side}${record.amount ? '  '+record.amount+'ml' : ''}`
+  if (type === 'pumping') return `${record.time}${record.title ? '  '+record.title : ''}`
   if (type === 'solids')  return `${record.time}  ${record.food}${record.reaction ? '  '+record.reaction : ''}`
   if (type === 'growth')  return [record.weight&&record.weight+'kg', record.height&&record.height+'cm', record.headCirc&&'頭'+record.headCirc+'cm'].filter(Boolean).join('  ')
   return ''

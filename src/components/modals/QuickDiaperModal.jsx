@@ -18,21 +18,13 @@ const diaperTypes = [
 const colorOptions = ['黃色', '綠色', '黃褐色', '紅色', '棕色', '黑色', '灰白']
 const consistencyOptions = ['顆粒', '硬', '正常', '鬆軟', '黏稠', '稀']
 const amountOptions = ['少量', '中等', '量多']
-const pumpSides = [
-  { value: 'left', label: '左側' },
-  { value: 'right', label: '右側' },
-  { value: 'both', label: '雙側' },
-]
-
 export default function QuickDiaperModal({ onClose, type = 'diaper', editRecord }) {
   const { addRecord, updateRecord } = useApp()
   const isPumping = type === 'pumping'
 
   const [form, setForm] = useState(isPumping ? {
     time: editRecord?.time || getCurrentTime(),
-    side: editRecord?.side || 'both',
-    amount: editRecord?.amount || '',
-    duration: editRecord?.duration || '',
+    title: editRecord?.title || '',
     notes: editRecord?.notes || '',
   } : {
     time: editRecord?.time || getCurrentTime(),
@@ -50,16 +42,12 @@ export default function QuickDiaperModal({ onClose, type = 'diaper', editRecord 
     setSaving(true)
     try {
       const recordType = isPumping ? 'pumping' : 'diaper'
-      const record = isPumping
-        ? { ...form, amount: form.amount ? Number(form.amount) : null, duration: form.duration ? Number(form.duration) : null }
-        : form
-
       if (editRecord) {
-        await updateRecord(recordType, { ...editRecord, ...record })
+        await updateRecord(recordType, { ...editRecord, ...form })
         toast.success('已更新')
       } else {
-        await addRecord(recordType, record)
-        toast.success(isPumping ? '擠奶記錄已新增 🤱' : '尿布記錄已新增 🫧')
+        await addRecord(recordType, form)
+        toast.success(isPumping ? '其他記錄已新增 ✨' : '尿布記錄已新增 🫧')
       }
       onClose()
     } catch {
@@ -70,7 +58,7 @@ export default function QuickDiaperModal({ onClose, type = 'diaper', editRecord 
   }
 
   return (
-    <Modal isOpen title={isPumping ? '擠奶記錄' : '尿布記錄'} onClose={onClose}>
+    <Modal isOpen title={isPumping ? '其他記錄' : '尿布記錄'} onClose={onClose}>
       <div className="space-y-4">
         {/* Time */}
         <div>
@@ -80,33 +68,10 @@ export default function QuickDiaperModal({ onClose, type = 'diaper', editRecord 
 
         {isPumping ? (
           <>
-            {/* Side */}
+            {/* Title */}
             <div>
-              <label className="form-label">側邊</label>
-              <div className="flex gap-2">
-                {pumpSides.map(s => (
-                  <button
-                    key={s.value}
-                    onClick={() => set('side', s.value)}
-                    className={`flex-1 py-2 rounded-xl border text-sm font-medium transition-all touch-manipulation ${
-                      form.side === s.value ? 'bg-pink-50 border-pink-300 text-pink-600' : 'bg-gray-50 border-gray-200 text-gray-600'
-                    }`}
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {/* Amount & Duration */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="form-label">奶量 (ml)</label>
-                <input type="number" placeholder="100" value={form.amount} onChange={e => set('amount', e.target.value)} className="form-input" inputMode="numeric" />
-              </div>
-              <div>
-                <label className="form-label">時間 (分鐘)</label>
-                <input type="number" placeholder="15" value={form.duration} onChange={e => set('duration', e.target.value)} className="form-input" inputMode="numeric" />
-              </div>
+              <label className="form-label">事件名稱</label>
+              <input type="text" placeholder="例如：看醫生、洗澡、外出..." value={form.title} onChange={e => set('title', e.target.value)} className="form-input" />
             </div>
           </>
         ) : (

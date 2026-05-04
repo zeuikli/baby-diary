@@ -9,7 +9,7 @@ const PAGE_TITLES = {
   '/feeding': '喝奶紀錄',
   '/sleep': '睡眠紀錄',
   '/diaper': '尿布紀錄',
-  '/pumping': '擠奶紀錄',
+  '/other': '其他紀錄',
   '/solids': '副食品紀錄',
   '/growth': '成長曲線',
   '/diary': '育兒日記',
