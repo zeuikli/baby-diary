@@ -141,7 +141,8 @@ export function AppProvider({ children }) {
         isGitHubConfigured: !!(token && github.owner && github.repo),
         enableDiary: saved.enableDiary || false,
         babies,
-        activeBabyId,
+        // When startup baby needs unlock, keep activeBabyId null until password is entered
+        activeBabyId: needsUnlock ? null : activeBabyId,
         autoConfigured: false,
         pendingUnlockBabyId: needsUnlock ? activeBabyId : null,
       }
@@ -270,10 +271,18 @@ export function AppProvider({ children }) {
     const updatedBabies = state.babies.filter(b => b.id !== babyId)
     dispatch({ type: 'SET_BABIES', payload: updatedBabies })
     settingsStore.update({ babies: updatedBabies })
+    unlockedProfiles.remove(babyId)
     if (state.activeBabyId === babyId) {
-      const nextId = updatedBabies[0]?.id ?? null
-      dispatch({ type: 'SET_ACTIVE_BABY', payload: nextId })
-      settingsStore.update({ activeBabyId: nextId })
+      const nextBaby = updatedBabies[0] ?? null
+      const nextId = nextBaby?.id ?? null
+      if (nextBaby?.passwordHash && !unlockedProfiles.has(nextId)) {
+        dispatch({ type: 'SET_ACTIVE_BABY', payload: null })
+        dispatch({ type: 'SET_PENDING_UNLOCK', payload: nextId })
+        settingsStore.update({ activeBabyId: null })
+      } else {
+        dispatch({ type: 'SET_ACTIVE_BABY', payload: nextId })
+        settingsStore.update({ activeBabyId: nextId })
+      }
     }
     if (githubService.isConfigured) {
       try { await githubService.deleteBaby(babyId) } catch (e) {
